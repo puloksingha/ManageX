@@ -97,8 +97,11 @@ export const AuthProvider = ({ children }) => {
     return () => clearInterval(interval);
   }, [accessToken, refreshToken, user]);
 
-  const login = async (email, password) => {
-    const { data } = await api.post("/auth/login", { email, password });
+  const login = async ({ email, password, adminSecurityKey }) => {
+    const payload = { email, password };
+    if (adminSecurityKey) payload.adminSecurityKey = adminSecurityKey;
+
+    const { data } = await api.post("/auth/login", payload);
     setUser(data.user);
     setAccessToken(data.accessToken);
     setRefreshToken(data.refreshToken);

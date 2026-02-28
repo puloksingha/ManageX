@@ -35,6 +35,19 @@ const sanitizeUser = (user) => ({
 const hashValue = (value) => crypto.createHash("sha256").update(value).digest("hex");
 
 const createVerificationCode = () => String(Math.floor(100000 + Math.random() * 900000));
+const adminSecurityKey = (process.env.ADMIN_SECURITY_KEY || "").trim();
+
+const requireAdminSecurityKey = (res, providedKey) => {
+  if (!adminSecurityKey) {
+    res.status(500);
+    throw new Error("Admin security key is not configured on the server");
+  }
+
+  if (String(providedKey || "").trim() !== adminSecurityKey) {
+    res.status(403);
+    throw new Error("Invalid admin security key");
+  }
+};
 
 const issueSessionTokens = async (user, previousRefreshToken) => {
   const accessToken = signAccessToken(user);
@@ -72,9 +85,13 @@ const sendVerificationCodeForUser = async (user) => {
 };
 
 export const register = asyncHandler(async (req, res) => {
-  const { name, email, password, department, batch, role } = req.body;
+  const { name, email, password, department, batch, role, adminSecurityKey: providedAdminSecurityKey } = req.body;
   const normalized = email.toLowerCase();
   const normalizedRole = ["student", "teacher", "admin"].includes(role) ? role : "student";
+
+  if (normalizedRole === "admin") {
+    requireAdminSecurityKey(res, providedAdminSecurityKey);
+  }
 
   const exists = await User.findOne({ email: normalized });
   if (exists) {
@@ -158,7 +175,7 @@ export const resendVerification = asyncHandler(async (req, res) => {
 });
 
 export const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, adminSecurityKey: providedAdminSecurityKey } = req.body;
 
   const user = await User.findOne({ email: email.toLowerCase() });
   if (!user || !(await user.comparePassword(password))) {
@@ -169,6 +186,10 @@ export const login = asyncHandler(async (req, res) => {
   if (!user.emailVerified) {
     res.status(403);
     throw new Error("Please verify your email before logging in");
+  }
+
+  if (user.role === "admin") {
+    requireAdminSecurityKey(res, providedAdminSecurityKey);
   }
 
   const { accessToken, refreshToken } = await issueSessionTokens(user);

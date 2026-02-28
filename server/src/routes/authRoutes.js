@@ -46,7 +46,8 @@ router.post(
       .optional()
       .isIn(["student", "teacher", "admin"])
       .withMessage("Role must be student, teacher, or admin"),
-    body("department").optional().isString().isLength({ max: 120 }).withMessage("Department must be up to 120 characters")
+    body("department").optional().isString().isLength({ max: 120 }).withMessage("Department must be up to 120 characters"),
+    body("adminSecurityKey").optional().isString().isLength({ min: 4, max: 120 })
   ],
   validate,
   register
@@ -64,7 +65,7 @@ router.post("/resend-verification", [body("email").isEmail()], validate, resendV
 router.post(
   "/login",
   loginLimiter,
-  [body("email").isEmail(), body("password").notEmpty()],
+  [body("email").isEmail(), body("password").notEmpty(), body("adminSecurityKey").optional().isString()],
   validate,
   login
 );

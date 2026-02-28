@@ -11,7 +11,7 @@ const LoginPage = () => {
   const { login } = useAuth();
   const roleFromQuery = params.get("role");
   const initialRole = ["student", "teacher", "admin"].includes(roleFromQuery) ? roleFromQuery : "student";
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "", adminSecurityKey: "" });
   const [role, setRole] = useState(initialRole);
   const [submitting, setSubmitting] = useState(false);
 
@@ -29,7 +29,11 @@ const LoginPage = () => {
     setSubmitting(true);
 
     try {
-      const user = await login(form.email, form.password);
+      const user = await login({
+        email: form.email,
+        password: form.password,
+        adminSecurityKey: role === "admin" ? form.adminSecurityKey : undefined
+      });
       if (user.role === "student") navigate("/student");
       else if (user.role === "teacher") navigate("/teacher");
       else navigate("/admin");
@@ -81,6 +85,18 @@ const LoginPage = () => {
             />
           </div>
         </div>
+        {role === "admin" ? (
+          <div>
+            <label className="text-sm font-medium">Admin Security Key</label>
+            <input
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800"
+              type="password"
+              value={form.adminSecurityKey}
+              onChange={(e) => setForm((prev) => ({ ...prev, adminSecurityKey: e.target.value }))}
+              required
+            />
+          </div>
+        ) : null}
 
         <button
           type="submit"
@@ -101,12 +117,12 @@ const LoginPage = () => {
         Forgot password? <Link className="font-semibold text-emerald-700" to="/forgot-password">Reset it</Link>
       </p>
 
-      <ul className="mt-6 space-y-1 text-xs text-slate-500 dark:text-slate-300">
+      {/* <ul className="mt-6 space-y-1 text-xs text-slate-500 dark:text-slate-300">
         {hint.map((item) => (
           <li key={item}>{item}</li>
         ))}
-      </ul>
-    </AuthShell>
+      </ul> */}
+    </AuthShell> 
   );
 };
 

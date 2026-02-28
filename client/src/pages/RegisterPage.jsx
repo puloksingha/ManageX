@@ -24,7 +24,8 @@ const RegisterPage = () => {
     email: "",
     password: "",
     department: "",
-    role: initialRole
+    role: initialRole,
+    adminSecurityKey: ""
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -76,6 +77,16 @@ const RegisterPage = () => {
           <option value="teacher">Teacher Register</option>
           <option value="admin">Admin Register</option>
         </select>
+        {form.role === "admin" ? (
+          <input
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+            placeholder="Admin Security Key"
+            type="password"
+            value={form.adminSecurityKey}
+            onChange={(e) => setForm((p) => ({ ...p, adminSecurityKey: e.target.value }))}
+            required
+          />
+        ) : null}
 
         <input
           className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"

@@ -1,14 +1,20 @@
 import { Router } from "express";
 import { body } from "express-validator";
 import {
+  deleteBatch,
+  deleteSubject,
   createBatch,
   createSubject,
   createUser,
   dashboard,
   deleteUser,
+  listBatches,
   listAuditLogs,
+  listSubjects,
   listUsers,
   resetPassword,
+  updateBatch,
+  updateSubject,
   updateUser
 } from "../controllers/adminController.js";
 import { auth } from "../middleware/auth.js";
@@ -32,16 +38,32 @@ router.post(
       .matches(/[a-z]/)
       .matches(/[0-9]/)
       .matches(/[^A-Za-z0-9]/),
-    body("role").isIn(["student", "teacher", "admin"]) 
+    body("role").isIn(["student", "teacher", "admin"]),
+    body("adminSecurityKey").optional().isString()
   ],
   validate,
   createUser
 );
-router.patch("/users/:id", [body("role").optional().isIn(["student", "teacher", "admin"])], validate, updateUser);
+router.patch(
+  "/users/:id",
+  [
+    body("email").optional().isEmail(),
+    body("role").optional().isIn(["student", "teacher", "admin"]),
+    body("adminSecurityKey").optional().isString()
+  ],
+  validate,
+  updateUser
+);
 router.delete("/users/:id", deleteUser);
 router.patch("/users/:id/reset-password", [body("password").isLength({ min: 8 })], validate, resetPassword);
+router.get("/batches", listBatches);
 router.post("/batches", [body("name").notEmpty(), body("department").notEmpty()], validate, createBatch);
+router.patch("/batches/:id", [body("name").optional().notEmpty(), body("department").optional().notEmpty()], validate, updateBatch);
+router.delete("/batches/:id", deleteBatch);
+router.get("/subjects", listSubjects);
 router.post("/subjects", [body("name").notEmpty(), body("department").notEmpty()], validate, createSubject);
+router.patch("/subjects/:id", [body("name").optional().notEmpty(), body("department").optional().notEmpty()], validate, updateSubject);
+router.delete("/subjects/:id", deleteSubject);
 router.get("/audit-logs", listAuditLogs);
 
 export default router;

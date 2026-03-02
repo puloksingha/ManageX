@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+﻿import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { api } from "../api/client";
@@ -57,7 +57,8 @@ const AdminDashboard = () => {
         page,
         limit: pagination.limit,
         search: nextSearch || undefined,
-        role: nextRole || undefined
+        role: nextRole || undefined,
+        excludeAdmin: true
       }
     });
 
@@ -112,7 +113,7 @@ const AdminDashboard = () => {
   };
 
   const loadTeachers = async () => {
-    const { data } = await api.get("/admin/users", { params: { role: "teacher", limit: 100 } });
+    const { data } = await api.get("/admin/users", { params: { role: "department", limit: 100 } });
     setTeachers(data.users || []);
   };
 
@@ -254,7 +255,7 @@ const AdminDashboard = () => {
     <DashboardLayout title="Admin Dashboard">
       <section className="grid gap-4 md:grid-cols-5">
         <StatCard title="Total Users" value={dashboard.totalUsers} />
-        <StatCard title="Teachers" value={dashboard.teachers} />
+        <StatCard title="Departments" value={dashboard.teachers} />
         <StatCard title="Students" value={dashboard.students} />
         <StatCard title="Active Assignments" value={dashboard.activeAssignments} />
         <StatCard title="Overdue Submissions" value={dashboard.overdueSubmissions} />
@@ -268,7 +269,7 @@ const AdminDashboard = () => {
           <PasswordField value={userForm.password} onChange={(e) => setUserForm((p) => ({ ...p, password: e.target.value }))} placeholder="Password" />
           <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.role} onChange={(e) => setUserForm((p) => ({ ...p, role: e.target.value }))}>
             <option value="student">student</option>
-            <option value="teacher">teacher</option>
+            <option value="department">department</option>
             <option value="admin">admin</option>
           </select>
           <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.batch} onChange={(e) => setUserForm((p) => ({ ...p, batch: e.target.value }))}>
@@ -299,7 +300,7 @@ const AdminDashboard = () => {
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Subject Name" value={subjectForm.name} onChange={(e) => setSubjectForm((p) => ({ ...p, name: e.target.value }))} required />
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Department" value={subjectForm.department} onChange={(e) => setSubjectForm((p) => ({ ...p, department: e.target.value }))} required />
           <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={subjectForm.teacher} onChange={(e) => setSubjectForm((p) => ({ ...p, teacher: e.target.value }))}>
-            <option value="">No teacher</option>
+            <option value="">No department</option>
             {teachers.map((teacher) => (
               <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
             ))}
@@ -308,22 +309,21 @@ const AdminDashboard = () => {
         </form>
       </section>
 
-      <section className="mt-6 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold">Student and Teacher Information</h2>
-          <form onSubmit={applyFilters} className="flex flex-wrap gap-2">
-            <input className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" placeholder="Search name/email/department" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <select className="rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
+      <section className="mt-6 min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+          <h2 className="text-lg font-semibold">Student and Department Information</h2>
+          <form onSubmit={applyFilters} className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap">
+            <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 sm:w-64" placeholder="Search name/email/department" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 sm:w-auto" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
               <option value="">All roles</option>
               <option value="student">student</option>
-              <option value="teacher">teacher</option>
-              <option value="admin">admin</option>
+              <option value="department">department</option>
             </select>
-            <button className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white">Apply</button>
+            <button className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white sm:w-auto">Apply</button>
           </form>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="w-full overflow-x-auto">
           <table className="w-full min-w-[1100px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-200 dark:border-slate-700">
@@ -348,7 +348,7 @@ const AdminDashboard = () => {
                   <td className="px-2 py-2">
                     <select className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.role || "student"} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], role: e.target.value } }))}>
                       <option value="student">student</option>
-                      <option value="teacher">teacher</option>
+                      <option value="department">department</option>
                       <option value="admin">admin</option>
                     </select>
                   </td>
@@ -369,7 +369,7 @@ const AdminDashboard = () => {
                     <input className="w-28 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" type="password" value={userDrafts[u._id]?.adminSecurityKey || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], adminSecurityKey: e.target.value } }))} placeholder="if admin" />
                   </td>
                   <td className="px-2 py-2">
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button onClick={() => saveUser(u._id)} className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">Save</button>
                       <button onClick={() => removeUser(u._id)} className="rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white">Delete</button>
                     </div>
@@ -385,7 +385,7 @@ const AdminDashboard = () => {
           </table>
         </div>
 
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500 dark:text-slate-300">Page {pagination.page} of {pagination.totalPages} | Total {pagination.total}</p>
           <div className="flex gap-2">
             <button disabled={pagination.page <= 1} onClick={() => loadUsers(pagination.page - 1)} className="rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-50 dark:border-slate-700">Previous</button>
@@ -395,16 +395,16 @@ const AdminDashboard = () => {
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <h2 className="mb-3 text-lg font-semibold">Batch Management</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700">
                   <th className="px-2 py-2">Name</th>
                   <th className="px-2 py-2">Department</th>
                   <th className="px-2 py-2">Students</th>
-                  <th className="px-2 py-2">Teachers</th>
+                  <th className="px-2 py-2">Departments</th>
                   <th className="px-2 py-2">Assignments</th>
                   <th className="px-2 py-2">Actions</th>
                 </tr>
@@ -418,7 +418,7 @@ const AdminDashboard = () => {
                     <td className="px-2 py-2">{batch.teacherCount || 0}</td>
                     <td className="px-2 py-2">{batch.assignmentCount || 0}</td>
                     <td className="px-2 py-2">
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button onClick={() => saveBatch(batch._id)} className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">Save</button>
                         <button onClick={() => removeBatch(batch._id)} className="rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white">Delete</button>
                       </div>
@@ -435,15 +435,15 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <h2 className="mb-3 text-lg font-semibold">Subject Management</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
+          <div className="w-full overflow-x-auto">
+            <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-slate-700">
                   <th className="px-2 py-2">Name</th>
                   <th className="px-2 py-2">Department</th>
-                  <th className="px-2 py-2">Teacher</th>
+                  <th className="px-2 py-2">Department</th>
                   <th className="px-2 py-2">Assignments</th>
                   <th className="px-2 py-2">Actions</th>
                 </tr>
@@ -455,7 +455,7 @@ const AdminDashboard = () => {
                     <td className="px-2 py-2"><input className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={subjectDrafts[subject._id]?.department || ""} onChange={(e) => setSubjectDrafts((p) => ({ ...p, [subject._id]: { ...p[subject._id], department: e.target.value } }))} /></td>
                     <td className="px-2 py-2">
                       <select className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={subjectDrafts[subject._id]?.teacher || ""} onChange={(e) => setSubjectDrafts((p) => ({ ...p, [subject._id]: { ...p[subject._id], teacher: e.target.value } }))}>
-                        <option value="">No teacher</option>
+                        <option value="">No department</option>
                         {teachers.map((teacher) => (
                           <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
                         ))}
@@ -463,7 +463,7 @@ const AdminDashboard = () => {
                     </td>
                     <td className="px-2 py-2">{subject.assignmentCount || 0}</td>
                     <td className="px-2 py-2">
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
                         <button onClick={() => saveSubject(subject._id)} className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">Save</button>
                         <button onClick={() => removeSubject(subject._id)} className="rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white">Delete</button>
                       </div>
@@ -485,3 +485,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

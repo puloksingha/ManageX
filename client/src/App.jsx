@@ -16,7 +16,7 @@ const RootRedirect = () => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/" replace />;
   if (user.role === "student") return <Navigate to="/student" replace />;
-  if (user.role === "teacher") return <Navigate to="/teacher" replace />;
+  if (user.role === "department" || user.role === "teacher") return <Navigate to="/department" replace />;
   return <Navigate to="/admin" replace />;
 };
 
@@ -40,13 +40,14 @@ const App = () => {
       />
 
       <Route
-        path="/teacher"
+        path="/department"
         element={
-          <ProtectedRoute allow={["teacher"]}>
+          <ProtectedRoute allow={["department", "teacher"]}>
             <TeacherDashboard />
           </ProtectedRoute>
         }
       />
+      <Route path="/teacher" element={<Navigate to="/department" replace />} />
 
       <Route
         path="/admin"
@@ -60,7 +61,7 @@ const App = () => {
       <Route
         path="/profile"
         element={
-          <ProtectedRoute allow={["student", "teacher", "admin"]}>
+          <ProtectedRoute allow={["student", "department", "teacher", "admin"]}>
             <ProfilePage />
           </ProtectedRoute>
         }

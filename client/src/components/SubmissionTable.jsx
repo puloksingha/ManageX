@@ -1,3 +1,5 @@
+import { apiOrigin } from "../api/client";
+
 const SubmissionTable = ({ rows = [] }) => {
   return (
     <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
@@ -8,6 +10,7 @@ const SubmissionTable = ({ rows = [] }) => {
             <th className="px-4 py-3">Assignment</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Marks</th>
+            <th className="px-4 py-3">File</th>
           </tr>
         </thead>
         <tbody>
@@ -17,6 +20,20 @@ const SubmissionTable = ({ rows = [] }) => {
               <td className="px-4 py-3">{row.assignment?.title || "-"}</td>
               <td className="px-4 py-3">{row.status}</td>
               <td className="px-4 py-3">{row.marks ?? "-"}</td>
+              <td className="px-4 py-3">
+                {row.fileUrl ? (
+                  <a
+                    href={`${apiOrigin}${row.fileUrl}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-emerald-600 hover:underline"
+                  >
+                    View
+                  </a>
+                ) : (
+                  "-"
+                )}
+              </td>
             </tr>
           ))}
         </tbody>

@@ -27,7 +27,7 @@ router.post(
 router.patch(
   "/:id/grade",
   auth,
-  roleCheck("teacher", "admin"),
+  roleCheck("department", "admin"),
   [body("marks").isNumeric(), body("feedback").optional().isString()],
   validate,
   gradeSubmission

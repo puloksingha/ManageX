@@ -7,7 +7,7 @@ import AuditLog from "../models/AuditLog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const safeUser =
-  "name email role department batch emailVerified avatarUrl phone bio createdAt updatedAt";
+  "_id name email role department batch emailVerified avatarUrl phone bio createdAt updatedAt";
 const adminSecurityKey = (process.env.ADMIN_SECURITY_KEY || "").trim();
 
 const requireAdminSecurityKey = (res, providedKey) => {
@@ -59,7 +59,7 @@ export const createUser = asyncHandler(async (req, res) => {
   });
 
   const created = await User.findById(user._id)
-    .select(`-password ${safeUser}`)
+    .select(safeUser)
     .populate("batch", "name department");
 
   res.status(201).json({ message: "User created", user: created });
@@ -70,6 +70,7 @@ export const listUsers = asyncHandler(async (req, res) => {
   const limit = Math.min(Math.max(Number(req.query.limit) || 10, 1), 100);
   const search = (req.query.search || "").trim();
   const role = (req.query.role || "").trim();
+  const excludeAdmin = ["true", "1"].includes(String(req.query.excludeAdmin || "").toLowerCase());
 
   const filter = {};
   if (search) {
@@ -79,13 +80,15 @@ export const listUsers = asyncHandler(async (req, res) => {
       { department: { $regex: search, $options: "i" } }
     ];
   }
-  if (role && ["student", "teacher", "admin"].includes(role)) {
-    filter.role = role;
+  if (role && ["student", "department", "teacher", "admin"].includes(role)) {
+    filter.role = role === "department" ? { $in: ["department", "teacher"] } : role;
+  } else if (excludeAdmin) {
+    filter.role = { $ne: "admin" };
   }
 
   const [users, total] = await Promise.all([
     User.find(filter)
-      .select(`-password ${safeUser}`)
+      .select(safeUser)
       .populate("batch", "name department")
       .sort({ createdAt: -1 })
       .skip((page - 1) * limit)
@@ -146,7 +149,7 @@ export const updateUser = asyncHandler(async (req, res) => {
   await currentUser.save();
 
   const user = await User.findById(currentUser._id)
-    .select(`-password ${safeUser}`)
+    .select(safeUser)
     .populate("batch", "name department");
   if (!user) {
     res.status(404);
@@ -228,7 +231,7 @@ export const listBatches = asyncHandler(async (req, res) => {
     batches.map(async (batch) => {
       const [studentCount, teacherCount, assignmentCount] = await Promise.all([
         User.countDocuments({ batch: batch._id, role: "student" }),
-        User.countDocuments({ batch: batch._id, role: "teacher" }),
+        User.countDocuments({ batch: batch._id, role: { $in: ["department", "teacher"] } }),
         Assignment.countDocuments({ batch: batch._id })
       ]);
 
@@ -379,7 +382,7 @@ export const dashboard = asyncHandler(async (req, res) => {
     User.countDocuments(),
     Assignment.countDocuments({ dueDate: { $gte: new Date() } }),
     Submission.countDocuments({ status: "Late" }),
-    User.countDocuments({ role: "teacher" }),
+    User.countDocuments({ role: { $in: ["department", "teacher"] } }),
     User.countDocuments({ role: "student" })
   ]);
 

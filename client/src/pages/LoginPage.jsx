@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -10,7 +10,7 @@ const LoginPage = () => {
   const [params] = useSearchParams();
   const { login } = useAuth();
   const roleFromQuery = params.get("role");
-  const initialRole = ["student", "teacher", "admin"].includes(roleFromQuery) ? roleFromQuery : "student";
+  const initialRole = roleFromQuery === "teacher" ? "department" : ["student", "department", "admin"].includes(roleFromQuery) ? roleFromQuery : "student";
   const [form, setForm] = useState({ email: "", password: "", adminSecurityKey: "" });
   const [role, setRole] = useState(initialRole);
   const [submitting, setSubmitting] = useState(false);
@@ -18,7 +18,7 @@ const LoginPage = () => {
   const hint = useMemo(
     () => [
       "Admin: admin@college.edu / Admin@123",
-      "Teacher: teacher@college.edu / Teacher@123",
+      "Department: department@college.edu / Department@123",
       "Student: student@college.edu / Student@123"
     ],
     []
@@ -35,7 +35,7 @@ const LoginPage = () => {
         adminSecurityKey: role === "admin" ? form.adminSecurityKey : undefined
       });
       if (user.role === "student") navigate("/student");
-      else if (user.role === "teacher") navigate("/teacher");
+      else if (user.role === "department" || user.role === "teacher") navigate("/department");
       else navigate("/admin");
     } catch (error) {
       const message = error.response?.data?.message || "Login failed";
@@ -59,7 +59,7 @@ const LoginPage = () => {
             onChange={(e) => setRole(e.target.value)}
           >
             <option value="student">Student login</option>
-            <option value="teacher">Teacher login</option>
+            <option value="department">Department login</option>
             <option value="admin">Admin login</option>
           </select>
         </div>
@@ -108,7 +108,7 @@ const LoginPage = () => {
       </form>
 
       <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
-        New {role}?{" "}
+        New {role === "department" ? "department" : role}?{" "}
         <Link className="font-semibold text-emerald-700" to={`/register?role=${role}`}>
           Create account
         </Link>
@@ -127,3 +127,4 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+

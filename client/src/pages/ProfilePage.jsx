@@ -9,6 +9,7 @@ const ProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [form, setForm] = useState({ name: "", department: "", phone: "", bio: "" });
   const [avatar, setAvatar] = useState(null);
+  const [avatarVersion, setAvatarVersion] = useState(Date.now());
 
   const load = async () => {
     const { data } = await api.get("/profiles/me");
@@ -45,10 +46,14 @@ const ProfilePage = () => {
     fd.append("avatar", avatar);
 
     try {
-      await api.post("/profiles/me/avatar", fd, {
+      const { data } = await api.post("/profiles/me/avatar", fd, {
         headers: { "Content-Type": "multipart/form-data" }
       });
+      if (data?.user) {
+        setProfile(data.user);
+      }
       setAvatar(null);
+      setAvatarVersion(Date.now());
       await load();
       await refreshUser();
       toast.success("Avatar uploaded");
@@ -63,7 +68,11 @@ const ProfilePage = () => {
         <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-4">
             <img
-              src={profile?.avatarUrl ? `${apiOrigin}${profile.avatarUrl}` : "https://placehold.co/100x100?text=Avatar"}
+              src={
+                profile?.avatarUrl
+                  ? `${apiOrigin}${profile.avatarUrl}?v=${avatarVersion}`
+                  : "https://placehold.co/100x100?text=Avatar"
+              }
               alt="Avatar"
               className="h-20 w-20 rounded-full object-cover"
             />

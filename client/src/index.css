@@ -13,3 +13,161 @@ body {
 .dark body {
   @apply bg-slate-950 text-slate-100;
 }
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-slow {
+  0% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(-10px) translateX(6px);
+  }
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+}
+
+@keyframes pulse-soft {
+  0% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+}
+
+@keyframes spin-cube {
+  0% {
+    transform: rotateX(-20deg) rotateY(0deg);
+  }
+  100% {
+    transform: rotateX(-20deg) rotateY(360deg);
+  }
+}
+
+.animate-fade-up {
+  opacity: 0;
+  animation: fade-up 0.6s ease forwards;
+}
+
+.delay-1 {
+  animation-delay: 0.1s;
+}
+
+.delay-2 {
+  animation-delay: 0.2s;
+}
+
+.delay-3 {
+  animation-delay: 0.3s;
+}
+
+.delay-4 {
+  animation-delay: 0.4s;
+}
+
+.delay-5 {
+  animation-delay: 0.5s;
+}
+
+.float-slow {
+  animation: float-slow 7s ease-in-out infinite;
+}
+
+.pulse-soft {
+  animation: pulse-soft 6s ease-in-out infinite;
+}
+
+.scene-3d {
+  perspective: 900px;
+}
+
+.cube-wrap {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  transform-style: preserve-3d;
+  animation: spin-cube 9s linear infinite;
+}
+
+.cube-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.cube-face-1 {
+  background: rgba(16, 185, 129, 0.35);
+  transform: translateZ(46px);
+}
+
+.cube-face-2 {
+  background: rgba(6, 182, 212, 0.35);
+  transform: rotateY(180deg) translateZ(46px);
+}
+
+.cube-face-3 {
+  background: rgba(16, 185, 129, 0.28);
+  transform: rotateY(90deg) translateZ(46px);
+}
+
+.cube-face-4 {
+  background: rgba(6, 182, 212, 0.28);
+  transform: rotateY(-90deg) translateZ(46px);
+}
+
+.cube-face-5 {
+  background: rgba(15, 23, 42, 0.22);
+  transform: rotateX(90deg) translateZ(46px);
+}
+
+.cube-face-6 {
+  background: rgba(15, 23, 42, 0.22);
+  transform: rotateX(-90deg) translateZ(46px);
+}
+
+.tilt-3d {
+  transform-style: preserve-3d;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.tilt-3d:hover {
+  transform: rotateX(5deg) rotateY(-6deg) translateY(-3px);
+}
+
+.tilt-3d > * {
+  transform: translateZ(12px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up,
+  .float-slow,
+  .pulse-soft,
+  .cube-wrap {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .tilt-3d {
+    transition: none !important;
+  }
+}

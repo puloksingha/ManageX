@@ -44,10 +44,10 @@ router.post(
       .withMessage("Password must include a special character"),
     body("role")
       .optional()
-      .isIn(["student", "teacher", "admin"])
-      .withMessage("Role must be student, teacher, or admin"),
+      .isIn(["student", "department", "teacher", "admin"])
+      .withMessage("Role must be student, department, or admin"),
     body("department").optional().isString().isLength({ max: 120 }).withMessage("Department must be up to 120 characters"),
-    body("adminSecurityKey").optional().isString().isLength({ min: 4, max: 120 })
+    body("adminSecurityKey").optional({ values: "falsy" }).isString().isLength({ min: 4, max: 120 })
   ],
   validate,
   register

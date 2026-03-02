@@ -1,7 +1,10 @@
 import Assignment from "../models/Assignment.js";
 import Submission from "../models/Submission.js";
 import AuditLog from "../models/AuditLog.js";
+import Subject from "../models/Subject.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+
+const isDepartmentRole = (role) => role === "department" || role === "teacher";
 
 export const submitAssignment = asyncHandler(async (req, res) => {
   if (!req.file) {
@@ -9,10 +12,25 @@ export const submitAssignment = asyncHandler(async (req, res) => {
     throw new Error("Submission file is required");
   }
 
-  const assignment = await Assignment.findById(req.body.assignment);
+  const assignment = await Assignment.findById(req.body.assignment)
+    .populate("subject", "department")
+    .populate("batch", "department");
   if (!assignment) {
     res.status(404);
     throw new Error("Assignment not found");
+  }
+
+  const studentDepartment = String(req.user.department || "").trim();
+  const assignmentDepartment = String(assignment.subject?.department || "").trim();
+
+  if (req.user.batch && String(assignment.batch?._id || "") !== String(req.user.batch)) {
+    res.status(403);
+    throw new Error("Students can submit only assignments from their own batch");
+  }
+
+  if (studentDepartment && assignmentDepartment && studentDepartment !== assignmentDepartment) {
+    res.status(403);
+    throw new Error("Students can submit only assignments from their own department");
   }
 
   const isLate = new Date() > assignment.dueDate;
@@ -44,8 +62,37 @@ export const listSubmissions = asyncHandler(async (req, res) => {
     query.student = req.user._id;
   }
 
+  if (isDepartmentRole(req.user.role)) {
+    const teacherDepartment = String(req.user.department || "").trim();
+    if (!teacherDepartment) {
+      return res.json({ submissions: [] });
+    }
+
+    const departmentSubjects = await Subject.find({ department: teacherDepartment }).select("_id");
+    if (!departmentSubjects.length) {
+      return res.json({ submissions: [] });
+    }
+
+    const departmentAssignments = await Assignment.find({
+      subject: { $in: departmentSubjects.map((subject) => subject._id) }
+    }).select("_id");
+
+    if (!departmentAssignments.length) {
+      return res.json({ submissions: [] });
+    }
+
+    query.assignment = { $in: departmentAssignments.map((assignment) => assignment._id) };
+  }
+
   if (req.query.assignment) {
-    query.assignment = req.query.assignment;
+    if (isDepartmentRole(req.user.role)) {
+      if (!query.assignment.$in.some((id) => String(id) === String(req.query.assignment))) {
+        return res.json({ submissions: [] });
+      }
+      query.assignment = req.query.assignment;
+    } else {
+      query.assignment = req.query.assignment;
+    }
   }
 
   const submissions = await Submission.find(query)
@@ -59,10 +106,23 @@ export const listSubmissions = asyncHandler(async (req, res) => {
 export const gradeSubmission = asyncHandler(async (req, res) => {
   const { marks, feedback } = req.body;
 
-  const submission = await Submission.findById(req.params.id).populate("assignment");
+  const submission = await Submission.findById(req.params.id).populate({
+    path: "assignment",
+    populate: { path: "subject", select: "department" }
+  });
   if (!submission) {
     res.status(404);
     throw new Error("Submission not found");
+  }
+
+  if (isDepartmentRole(req.user.role)) {
+    const teacherDepartment = String(req.user.department || "").trim();
+    const assignmentDepartment = String(submission.assignment?.subject?.department || "").trim();
+
+    if (!teacherDepartment || teacherDepartment !== assignmentDepartment) {
+      res.status(403);
+      throw new Error("Department accounts can grade submissions only within their own department");
+    }
   }
 
   if (Number(marks) > submission.assignment.maxMarks) {

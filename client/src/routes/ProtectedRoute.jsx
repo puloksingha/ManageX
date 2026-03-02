@@ -14,7 +14,7 @@ const ProtectedRoute = ({ allow, children }) => {
   }
 
   if (!allow.includes(user.role)) {
-    const redirect = user.role === "student" ? "/student" : user.role === "teacher" ? "/teacher" : "/admin";
+    const redirect = user.role === "student" ? "/student" : user.role === "department" || user.role === "teacher" ? "/department" : "/admin";
     return <Navigate to={redirect} replace />;
   }
 

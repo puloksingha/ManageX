@@ -1,8 +1,38 @@
 import Assignment from "../models/Assignment.js";
 import AuditLog from "../models/AuditLog.js";
+import Subject from "../models/Subject.js";
+import Batch from "../models/Batch.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+const isDepartmentRole = (role) => role === "department" || role === "teacher";
+
 export const createAssignment = asyncHandler(async (req, res) => {
+  const subjectDoc = await Subject.findById(req.body.subject).select("department");
+  const batchDoc = await Batch.findById(req.body.batch).select("department");
+
+  if (!subjectDoc || !batchDoc) {
+    res.status(404);
+    throw new Error("Subject or batch not found");
+  }
+
+  if (String(subjectDoc.department).trim() !== String(batchDoc.department).trim()) {
+    res.status(422);
+    throw new Error("Subject and batch must belong to the same department");
+  }
+
+  if (isDepartmentRole(req.user.role)) {
+    const teacherDepartment = String(req.user.department || "").trim();
+    if (!teacherDepartment) {
+      res.status(403);
+      throw new Error("Department account must have a department configured to create assignments");
+    }
+
+    if (String(subjectDoc.department).trim() !== teacherDepartment) {
+      res.status(403);
+      throw new Error("Department accounts can create assignments only for their own department");
+    }
+  }
+
   const attachments = req.files?.map((file) => `/uploads/${file.filename}`) || [];
 
   const assignment = await Assignment.create({
@@ -21,13 +51,62 @@ export const createAssignment = asyncHandler(async (req, res) => {
 });
 
 export const listAssignments = asyncHandler(async (req, res) => {
-  const { subject, batch, status } = req.query;
+  const { subject, batch, status, mine, departmentOnly } = req.query;
   const query = {};
   if (subject) query.subject = subject;
   if (batch) query.batch = batch;
+  if (mine === "true" || mine === "1") {
+    query.createdBy = req.user._id;
+  }
+
+  const applyDepartmentScope = async (department) => {
+    if (!department) {
+      return false;
+    }
+
+    const departmentSubjects = await Subject.find({ department }).select("_id");
+    if (!departmentSubjects.length) {
+      return false;
+    }
+
+    const departmentSubjectIds = departmentSubjects.map((item) => String(item._id));
+    if (query.subject) {
+      if (!departmentSubjectIds.includes(String(query.subject))) {
+        return false;
+      }
+    } else {
+      query.subject = { $in: departmentSubjectIds };
+    }
+
+    return true;
+  };
+
+  if (req.user.role === "student") {
+    if (!req.user.batch) {
+      return res.json({ assignments: [] });
+    }
+
+    if (query.batch && String(query.batch) !== String(req.user.batch)) {
+      return res.json({ assignments: [] });
+    }
+
+    query.batch = req.user.batch;
+    const ok = await applyDepartmentScope(String(req.user.department || "").trim());
+    if (!ok) return res.json({ assignments: [] });
+  }
+
+  if (isDepartmentRole(req.user.role)) {
+    const ok = await applyDepartmentScope(String(req.user.department || "").trim());
+    if (!ok) return res.json({ assignments: [] });
+  }
+
+  if (departmentOnly === "true" || departmentOnly === "1") {
+    const ok = await applyDepartmentScope(String(req.user.department || "").trim());
+    if (!ok) return res.json({ assignments: [] });
+  }
 
   const assignments = await Assignment.find(query)
-    .populate("subject", "name")
+    .populate("subject", "name department")
     .populate("batch", "name")
     .populate("createdBy", "name email")
     .sort({ dueDate: 1 });
@@ -51,7 +130,32 @@ export const updateAssignment = asyncHandler(async (req, res) => {
 
   if (String(assignment.createdBy) !== String(req.user._id) && req.user.role !== "admin") {
     res.status(403);
-    throw new Error("Only owner teacher or admin can edit this assignment");
+    throw new Error("Only owner department account or admin can edit this assignment");
+  }
+
+  const nextSubjectId = req.body.subject || assignment.subject;
+  const nextBatchId = req.body.batch || assignment.batch;
+  const [subjectDoc, batchDoc] = await Promise.all([
+    Subject.findById(nextSubjectId).select("department"),
+    Batch.findById(nextBatchId).select("department")
+  ]);
+
+  if (!subjectDoc || !batchDoc) {
+    res.status(404);
+    throw new Error("Subject or batch not found");
+  }
+
+  if (String(subjectDoc.department).trim() !== String(batchDoc.department).trim()) {
+    res.status(422);
+    throw new Error("Subject and batch must belong to the same department");
+  }
+
+  if (isDepartmentRole(req.user.role)) {
+    const teacherDepartment = String(req.user.department || "").trim();
+    if (!teacherDepartment || String(subjectDoc.department).trim() !== teacherDepartment) {
+      res.status(403);
+      throw new Error("Department accounts can update assignments only in their own department");
+    }
   }
 
   const nextAttachments = req.files?.length
@@ -79,7 +183,7 @@ export const deleteAssignment = asyncHandler(async (req, res) => {
 
   if (String(assignment.createdBy) !== String(req.user._id) && req.user.role !== "admin") {
     res.status(403);
-    throw new Error("Only owner teacher or admin can delete this assignment");
+    throw new Error("Only owner department account or admin can delete this assignment");
   }
 
   await assignment.deleteOne();

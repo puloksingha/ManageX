@@ -19,11 +19,16 @@ const msFromExpiry = (exp = "7d") => {
   return value * 24 * 60 * 60 * 1000;
 };
 
+const normalizeRole = (role) => {
+  if (role === "teacher") return "department";
+  return role;
+};
+
 const sanitizeUser = (user) => ({
   id: user._id,
   name: user.name,
   email: user.email,
-  role: user.role,
+  role: normalizeRole(user.role),
   department: user.department,
   batch: user.batch,
   emailVerified: user.emailVerified,
@@ -87,7 +92,7 @@ const sendVerificationCodeForUser = async (user) => {
 export const register = asyncHandler(async (req, res) => {
   const { name, email, password, department, batch, role, adminSecurityKey: providedAdminSecurityKey } = req.body;
   const normalized = email.toLowerCase();
-  const normalizedRole = ["student", "teacher", "admin"].includes(role) ? role : "student";
+  const normalizedRole = ["student", "department", "teacher", "admin"].includes(role) ? normalizeRole(role) : "student";
 
   if (normalizedRole === "admin") {
     requireAdminSecurityKey(res, providedAdminSecurityKey);
@@ -190,6 +195,11 @@ export const login = asyncHandler(async (req, res) => {
 
   if (user.role === "admin") {
     requireAdminSecurityKey(res, providedAdminSecurityKey);
+  }
+
+  if (user.role === "teacher") {
+    user.role = "department";
+    await user.save();
   }
 
   const { accessToken, refreshToken } = await issueSessionTokens(user);

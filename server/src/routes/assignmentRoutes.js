@@ -18,7 +18,7 @@ router.get("/", auth, listAssignments);
 router.post(
   "/",
   auth,
-  roleCheck("teacher", "admin"),
+  roleCheck("department", "admin"),
   upload.array("attachments", 4),
   [
     body("title").notEmpty(),
@@ -35,11 +35,11 @@ router.post(
 router.put(
   "/:id",
   auth,
-  roleCheck("teacher", "admin"),
+  roleCheck("department", "admin"),
   upload.array("attachments", 4),
   updateAssignment
 );
 
-router.delete("/:id", auth, roleCheck("teacher", "admin"), deleteAssignment);
+router.delete("/:id", auth, roleCheck("department", "admin"), deleteAssignment);
 
 export default router;

@@ -11,7 +11,7 @@ import {
 } from "chart.js";
 import DashboardLayout from "../layouts/DashboardLayout";
 import AssignmentCard from "../components/AssignmentCard";
-import { api } from "../api/client";
+import { api, apiOrigin } from "../api/client";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -88,6 +88,7 @@ const StudentDashboard = () => {
             subject={assignment.subject?.name}
             dueDate={assignment.dueDate}
             status={assignment.status}
+            attachments={assignment.attachments || []}
           />
         ))}
       </section>
@@ -142,6 +143,7 @@ const StudentDashboard = () => {
                 <th className="px-3 py-2">Status</th>
                 <th className="px-3 py-2">Grade</th>
                 <th className="px-3 py-2">Teacher Comment</th>
+                <th className="px-3 py-2">My File</th>
               </tr>
             </thead>
             <tbody>
@@ -155,11 +157,25 @@ const StudentDashboard = () => {
                       : "Pending review"}
                   </td>
                   <td className="px-3 py-2">{submission.feedback || "-"}</td>
+                  <td className="px-3 py-2">
+                    {submission.fileUrl ? (
+                      <a
+                        href={`${apiOrigin}${submission.fileUrl}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-emerald-600 hover:underline"
+                      >
+                        View
+                      </a>
+                    ) : (
+                      "-"
+                    )}
+                  </td>
                 </tr>
               ))}
               {submissions.length === 0 && (
                 <tr>
-                  <td className="px-3 py-5 text-center text-slate-500" colSpan={4}>
+                  <td className="px-3 py-5 text-center text-slate-500" colSpan={5}>
                     No submissions yet.
                   </td>
                 </tr>

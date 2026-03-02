@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -18,7 +18,7 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const roleFromQuery = params.get("role");
-  const initialRole = ["student", "teacher", "admin"].includes(roleFromQuery) ? roleFromQuery : "student";
+  const initialRole = roleFromQuery === "teacher" ? "department" : ["student", "department", "admin"].includes(roleFromQuery) ? roleFromQuery : "student";
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -53,7 +53,19 @@ const RegisterPage = () => {
     setSubmitting(true);
 
     try {
-      await register(form);
+      const payload = {
+        name: form.name,
+        email: form.email,
+        password: form.password,
+        department: form.department,
+        role: form.role
+      };
+
+      if (form.role === "admin" && form.adminSecurityKey.trim()) {
+        payload.adminSecurityKey = form.adminSecurityKey.trim();
+      }
+
+      await register(payload);
       navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -64,7 +76,7 @@ const RegisterPage = () => {
 
   return (
     <AuthShell
-      title={`${form.role[0].toUpperCase()}${form.role.slice(1)} Registration`}
+      title={`${(form.role === "department" ? "Department" : form.role[0].toUpperCase() + form.role.slice(1))} Registration`}
       subtitle="Use your real email address. Verification is mandatory."
     >
       <form onSubmit={submit} className="mt-6 space-y-3">
@@ -74,7 +86,7 @@ const RegisterPage = () => {
           onChange={(e) => setForm((p) => ({ ...p, role: e.target.value }))}
         >
           <option value="student">Student Register</option>
-          <option value="teacher">Teacher Register</option>
+          <option value="department">Department Register</option>
           <option value="admin">Admin Register</option>
         </select>
         {form.role === "admin" ? (
@@ -142,3 +154,4 @@ const RegisterPage = () => {
 };
 
 export default RegisterPage;
+

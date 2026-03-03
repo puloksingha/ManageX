@@ -37,8 +37,8 @@ const seedUsers = [
   },
   {
     key: "teacherCse",
-    name: "Dr. Nila Rahman",
-    email: "nila.rahman@college.edu",
+    name: "Dr. jaffar iqbal",
+    email: "jaffar.iqbal@college.edu",
     password: "Teacher@123",
     role: "teacher",
     department: "Computer Science",
@@ -66,7 +66,7 @@ const seedUsers = [
     key: "studentB",
     name: "Rafiul Islam",
     email: "rafiul.islam@college.edu",
-    password: "Student@123",
+    password:"Student@123",
     role: "student",
     department: "Computer Science",
     emailVerified: true
@@ -86,6 +86,60 @@ const seedUsers = [
     email: "tanim.ahmed@college.edu",
     password: "Student@123",
     role: "student",
+    department: "Electrical Engineering",
+    emailVerified: true
+  },
+  {
+    key: "studentE",
+    name: "Rahul Das",
+    email: "rahul.das@college.edu",
+    password: "Student@123",
+    role: "student",
+    department: "Computer Science",
+    emailVerified: true
+  },
+  {
+    key: "studentF",
+    name: "Pawan Sen",
+    email: "pawan.sen@college.edu",
+    password: "Student@123",
+    role: "student",
+    department: "Computer Science",
+    emailVerified: true
+  },
+  {
+    key: "studentG",
+    name: "Maya Roy",
+    email: "maya.roy@college.edu",
+    password: "Student@123",
+    role: "student",
+    department: "Electrical Engineering",
+    emailVerified: true
+  },
+  {
+    key: "studentH",
+    name: "Sourav Dutta",
+    email: "sourav.dutta@college.edu",
+    password: "Student@123",
+    role: "student",
+    department: "Electrical Engineering",
+    emailVerified: true
+  },
+  {
+    key: "teacherCse2",
+    name: "Anika Paul",
+    email: "anika.paul@college.edu",
+    password: "Teacher@123",
+    role: "teacher",
+    department: "Computer Science",
+    emailVerified: true
+  },
+  {
+    key: "teacherEee2",
+    name: "Sanjay Ghosh",
+    email: "sanjay.ghosh@college.edu",
+    password: "Teacher@123",
+    role: "teacher",
     department: "Electrical Engineering",
     emailVerified: true
   }
@@ -288,10 +342,28 @@ const run = async () => {
       batchesByKey[payload.key] = await upsertBatch(payload);
     }
 
-    const cseStudents = [usersByKey.studentA?._id, usersByKey.studentB?._id].filter(Boolean);
-    const eeeStudents = [usersByKey.studentC?._id, usersByKey.studentD?._id].filter(Boolean);
-    const cseTeachers = [usersByKey.deptCse?._id, usersByKey.teacherCse?._id].filter(Boolean);
-    const eeeTeachers = [usersByKey.deptEee?._id, usersByKey.teacherEee?._id].filter(Boolean);
+    const cseStudents = [
+      usersByKey.studentA?._id,
+      usersByKey.studentB?._id,
+      usersByKey.studentE?._id,
+      usersByKey.studentF?._id
+    ].filter(Boolean);
+    const eeeStudents = [
+      usersByKey.studentC?._id,
+      usersByKey.studentD?._id,
+      usersByKey.studentG?._id,
+      usersByKey.studentH?._id
+    ].filter(Boolean);
+    const cseTeachers = [
+      usersByKey.deptCse?._id,
+      usersByKey.teacherCse?._id,
+      usersByKey.teacherCse2?._id
+    ].filter(Boolean);
+    const eeeTeachers = [
+      usersByKey.deptEee?._id,
+      usersByKey.teacherEee?._id,
+      usersByKey.teacherEee2?._id
+    ].filter(Boolean);
 
     if (batchesByKey.cse61) {
       batchesByKey.cse61.students = cseStudents;
@@ -306,11 +378,24 @@ const run = async () => {
 
     if (usersByKey.studentA) usersByKey.studentA.batch = batchesByKey.cse61?._id;
     if (usersByKey.studentB) usersByKey.studentB.batch = batchesByKey.cse61?._id;
+    if (usersByKey.studentE) usersByKey.studentE.batch = batchesByKey.cse61?._id;
+    if (usersByKey.studentF) usersByKey.studentF.batch = batchesByKey.cse61?._id;
     if (usersByKey.studentC) usersByKey.studentC.batch = batchesByKey.eee24?._id;
     if (usersByKey.studentD) usersByKey.studentD.batch = batchesByKey.eee24?._id;
+    if (usersByKey.studentG) usersByKey.studentG.batch = batchesByKey.eee24?._id;
+    if (usersByKey.studentH) usersByKey.studentH.batch = batchesByKey.eee24?._id;
 
     await Promise.all(
-      [usersByKey.studentA, usersByKey.studentB, usersByKey.studentC, usersByKey.studentD]
+      [
+        usersByKey.studentA,
+        usersByKey.studentB,
+        usersByKey.studentC,
+        usersByKey.studentD,
+        usersByKey.studentE,
+        usersByKey.studentF,
+        usersByKey.studentG,
+        usersByKey.studentH
+      ]
         .filter(Boolean)
         .map((student) => student.save())
     );

@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Department from "../models/Department.js";
 import RefreshToken from "../models/RefreshToken.js";
 import AuditLog from "../models/AuditLog.js";
 import EmailVerificationToken from "../models/EmailVerificationToken.js";
@@ -54,6 +55,18 @@ const requireAdminSecurityKey = (res, providedKey) => {
   }
 };
 
+const resolveActiveDepartmentName = async (department) => {
+  const trimmed = String(department || "").trim();
+  if (!trimmed) return "";
+
+  const dept = await Department.findOne({
+    normalizedName: trimmed.toLowerCase(),
+    active: true
+  });
+
+  return dept?.name || "";
+};
+
 const issueSessionTokens = async (user, previousRefreshToken) => {
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
@@ -93,9 +106,13 @@ export const register = asyncHandler(async (req, res) => {
   const { name, email, password, department, batch, role, adminSecurityKey: providedAdminSecurityKey } = req.body;
   const normalized = email.toLowerCase();
   const normalizedRole = ["student", "department", "teacher", "admin"].includes(role) ? normalizeRole(role) : "student";
+  const resolvedDepartment = await resolveActiveDepartmentName(department);
 
   if (normalizedRole === "admin") {
     requireAdminSecurityKey(res, providedAdminSecurityKey);
+  } else if (!resolvedDepartment) {
+    res.status(400);
+    throw new Error("Please select a valid department");
   }
 
   const exists = await User.findOne({ email: normalized });
@@ -109,7 +126,7 @@ export const register = asyncHandler(async (req, res) => {
     email: normalized,
     password,
     role: normalizedRole,
-    department,
+    department: resolvedDepartment,
     batch,
     emailVerified: false
   });

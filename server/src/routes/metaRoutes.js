@@ -1,10 +1,19 @@
 import { Router } from "express";
 import { auth } from "../middleware/auth.js";
 import Batch from "../models/Batch.js";
+import Department from "../models/Department.js";
 import Subject from "../models/Subject.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
 const router = Router();
+
+router.get(
+  "/departments",
+  asyncHandler(async (req, res) => {
+    const departments = await Department.find({ active: true }).sort({ name: 1 }).select("name");
+    res.json({ departments });
+  })
+);
 
 router.get(
   "/batches",

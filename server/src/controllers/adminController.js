@@ -3,6 +3,7 @@ import Assignment from "../models/Assignment.js";
 import Submission from "../models/Submission.js";
 import Batch from "../models/Batch.js";
 import Subject from "../models/Subject.js";
+import Department from "../models/Department.js";
 import AuditLog from "../models/AuditLog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
@@ -22,10 +23,32 @@ const requireAdminSecurityKey = (res, providedKey) => {
   }
 };
 
+const rolesWithDepartment = new Set(["student", "department", "teacher"]);
+
+const resolveDepartmentName = async (department, { activeOnly = true } = {}) => {
+  const trimmed = String(department || "").trim();
+  if (!trimmed) return "";
+
+  const query = { normalizedName: trimmed.toLowerCase() };
+  if (activeOnly) query.active = true;
+
+  const record = await Department.findOne(query);
+  return record?.name || "";
+};
+
 export const createUser = asyncHandler(async (req, res) => {
   const role = req.body.role || "student";
   if (role === "admin") {
     requireAdminSecurityKey(res, req.body.adminSecurityKey);
+  }
+
+  let resolvedDepartment = "";
+  if (rolesWithDepartment.has(role)) {
+    resolvedDepartment = await resolveDepartmentName(req.body.department, { activeOnly: true });
+    if (!resolvedDepartment) {
+      res.status(400);
+      throw new Error("Please select a valid department");
+    }
   }
 
   const email = req.body.email.toLowerCase().trim();
@@ -40,7 +63,7 @@ export const createUser = asyncHandler(async (req, res) => {
     email,
     password: req.body.password,
     role,
-    department: req.body.department || "",
+    department: resolvedDepartment,
     batch: req.body.batch || undefined,
     phone: req.body.phone || "",
     bio: req.body.bio || "",
@@ -145,6 +168,24 @@ export const updateUser = asyncHandler(async (req, res) => {
     updates.batch = null;
   }
 
+  const nextRole = updates.role || currentUser.role;
+  const departmentChanged = typeof updates.department !== "undefined";
+  const roleChanged = typeof updates.role !== "undefined";
+
+  if (rolesWithDepartment.has(nextRole) && (departmentChanged || roleChanged || !currentUser.department)) {
+    const departmentToValidate = departmentChanged ? updates.department : currentUser.department;
+    const resolved = await resolveDepartmentName(departmentToValidate, { activeOnly: true });
+    if (!resolved) {
+      res.status(400);
+      throw new Error("Please select a valid department");
+    }
+    updates.department = resolved;
+  }
+
+  if (nextRole === "admin" && roleChanged && !departmentChanged) {
+    updates.department = "";
+  }
+
   Object.assign(currentUser, updates);
   await currentUser.save();
 
@@ -211,10 +252,145 @@ export const resetPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password reset" });
 });
 
+export const createDepartment = asyncHandler(async (req, res) => {
+  const name = String(req.body.name || "").trim();
+  if (!name) {
+    res.status(400);
+    throw new Error("Department name is required");
+  }
+
+  const existing = await Department.findOne({ normalizedName: name.toLowerCase() });
+  if (existing) {
+    res.status(409);
+    throw new Error("Department already exists");
+  }
+
+  const department = await Department.create({
+    name,
+    active: typeof req.body.active === "boolean" ? req.body.active : true,
+    createdBy: req.user._id
+  });
+
+  await AuditLog.create({
+    action: "DEPARTMENT_CREATED",
+    performedBy: req.user._id,
+    targetEntity: `Department:${department._id}`
+  });
+
+  res.status(201).json({ message: "Department created", department });
+});
+
+export const listDepartments = asyncHandler(async (req, res) => {
+  const departments = await Department.find().sort({ name: 1 });
+
+  const enriched = await Promise.all(
+    departments.map(async (department) => {
+      const [userCount, batchCount, subjectCount] = await Promise.all([
+        User.countDocuments({ department: department.name }),
+        Batch.countDocuments({ department: department.name }),
+        Subject.countDocuments({ department: department.name })
+      ]);
+
+      return {
+        ...department.toObject(),
+        userCount,
+        batchCount,
+        subjectCount
+      };
+    })
+  );
+
+  res.json({ departments: enriched });
+});
+
+export const updateDepartment = asyncHandler(async (req, res) => {
+  const department = await Department.findById(req.params.id);
+  if (!department) {
+    res.status(404);
+    throw new Error("Department not found");
+  }
+
+  const previousName = department.name;
+  const nextName = typeof req.body.name === "undefined" ? previousName : String(req.body.name || "").trim();
+
+  if (!nextName) {
+    res.status(400);
+    throw new Error("Department name is required");
+  }
+
+  if (nextName.toLowerCase() !== previousName.toLowerCase()) {
+    const exists = await Department.findOne({
+      normalizedName: nextName.toLowerCase(),
+      _id: { $ne: department._id }
+    });
+    if (exists) {
+      res.status(409);
+      throw new Error("Department already exists");
+    }
+  }
+
+  department.name = nextName;
+  if (typeof req.body.active === "boolean") {
+    department.active = req.body.active;
+  }
+  await department.save();
+
+  if (previousName !== department.name) {
+    await Promise.all([
+      User.updateMany({ department: previousName }, { $set: { department: department.name } }),
+      Batch.updateMany({ department: previousName }, { $set: { department: department.name } }),
+      Subject.updateMany({ department: previousName }, { $set: { department: department.name } })
+    ]);
+  }
+
+  await AuditLog.create({
+    action: "DEPARTMENT_UPDATED",
+    performedBy: req.user._id,
+    targetEntity: `Department:${department._id}`
+  });
+
+  res.json({ message: "Department updated", department });
+});
+
+export const deleteDepartment = asyncHandler(async (req, res) => {
+  const department = await Department.findById(req.params.id);
+  if (!department) {
+    res.status(404);
+    throw new Error("Department not found");
+  }
+
+  const [userCount, batchCount, subjectCount] = await Promise.all([
+    User.countDocuments({ department: department.name }),
+    Batch.countDocuments({ department: department.name }),
+    Subject.countDocuments({ department: department.name })
+  ]);
+
+  if (userCount > 0 || batchCount > 0 || subjectCount > 0) {
+    res.status(400);
+    throw new Error("Cannot delete department while it is linked to users, batches, or subjects");
+  }
+
+  await department.deleteOne();
+
+  await AuditLog.create({
+    action: "DEPARTMENT_DELETED",
+    performedBy: req.user._id,
+    targetEntity: `Department:${req.params.id}`
+  });
+
+  res.json({ message: "Department deleted" });
+});
+
 export const createBatch = asyncHandler(async (req, res) => {
+  const department = await resolveDepartmentName(req.body.department, { activeOnly: true });
+  if (!department) {
+    res.status(400);
+    throw new Error("Please select a valid department");
+  }
+
   const batch = await Batch.create({
     name: req.body.name,
-    department: req.body.department
+    department
   });
   await AuditLog.create({
     action: "BATCH_CREATED",
@@ -250,7 +426,14 @@ export const listBatches = asyncHandler(async (req, res) => {
 export const updateBatch = asyncHandler(async (req, res) => {
   const updates = {};
   if (typeof req.body.name !== "undefined") updates.name = req.body.name;
-  if (typeof req.body.department !== "undefined") updates.department = req.body.department;
+  if (typeof req.body.department !== "undefined") {
+    const department = await resolveDepartmentName(req.body.department, { activeOnly: true });
+    if (!department) {
+      res.status(400);
+      throw new Error("Please select a valid department");
+    }
+    updates.department = department;
+  }
 
   const batch = await Batch.findByIdAndUpdate(req.params.id, updates, {
     new: true,
@@ -297,9 +480,15 @@ export const deleteBatch = asyncHandler(async (req, res) => {
 });
 
 export const createSubject = asyncHandler(async (req, res) => {
+  const department = await resolveDepartmentName(req.body.department, { activeOnly: true });
+  if (!department) {
+    res.status(400);
+    throw new Error("Please select a valid department");
+  }
+
   const subject = await Subject.create({
     name: req.body.name,
-    department: req.body.department,
+    department,
     teacher: req.body.teacher || undefined
   });
   await AuditLog.create({
@@ -331,7 +520,14 @@ export const listSubjects = asyncHandler(async (req, res) => {
 export const updateSubject = asyncHandler(async (req, res) => {
   const updates = {};
   if (typeof req.body.name !== "undefined") updates.name = req.body.name;
-  if (typeof req.body.department !== "undefined") updates.department = req.body.department;
+  if (typeof req.body.department !== "undefined") {
+    const department = await resolveDepartmentName(req.body.department, { activeOnly: true });
+    if (!department) {
+      res.status(400);
+      throw new Error("Please select a valid department");
+    }
+    updates.department = department;
+  }
   if (typeof req.body.teacher !== "undefined") updates.teacher = req.body.teacher || null;
 
   const subject = await Subject.findByIdAndUpdate(req.params.id, updates, {

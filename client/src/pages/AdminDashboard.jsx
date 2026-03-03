@@ -33,6 +33,7 @@ const AdminDashboard = () => {
     overdueSubmissions: 0
   });
   const [users, setUsers] = useState([]);
+  const [departments, setDepartments] = useState([]);
   const [batches, setBatches] = useState([]);
   const [subjects, setSubjects] = useState([]);
   const [teachers, setTeachers] = useState([]);
@@ -40,8 +41,10 @@ const AdminDashboard = () => {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("");
   const [userForm, setUserForm] = useState(initialUserForm);
+  const [departmentForm, setDepartmentForm] = useState({ name: "", active: true });
   const [batchForm, setBatchForm] = useState({ name: "", department: "" });
   const [subjectForm, setSubjectForm] = useState({ name: "", department: "", teacher: "" });
+  const [departmentDrafts, setDepartmentDrafts] = useState({});
   const [userDrafts, setUserDrafts] = useState({});
   const [batchDrafts, setBatchDrafts] = useState({});
   const [subjectDrafts, setSubjectDrafts] = useState({});
@@ -84,6 +87,21 @@ const AdminDashboard = () => {
     setUserDrafts(drafts);
   };
 
+  const loadDepartments = async () => {
+    const { data } = await api.get("/admin/departments");
+    const list = data.departments || [];
+    setDepartments(list);
+
+    const drafts = {};
+    for (const department of list) {
+      drafts[department._id] = {
+        name: department.name || "",
+        active: Boolean(department.active)
+      };
+    }
+    setDepartmentDrafts(drafts);
+  };
+
   const loadBatches = async () => {
     const { data } = await api.get("/admin/batches");
     const list = data.batches || [];
@@ -118,18 +136,37 @@ const AdminDashboard = () => {
   };
 
   const reloadAll = async () => {
-    await Promise.all([loadDashboard(), loadUsers(1), loadBatches(), loadSubjects(), loadTeachers()]);
+    await Promise.all([loadDashboard(), loadUsers(1), loadDepartments(), loadBatches(), loadSubjects(), loadTeachers()]);
   };
 
   useEffect(() => {
     reloadAll().catch(() => {
       setDashboard({ totalUsers: 0, teachers: 0, students: 0, activeAssignments: 0, overdueSubmissions: 0 });
       setUsers([]);
+      setDepartments([]);
       setBatches([]);
       setSubjects([]);
       setTeachers([]);
     });
   }, []);
+
+  useEffect(() => {
+    if (!departments.length) return;
+    const defaultDepartment = departments[0].name;
+
+    setUserForm((prev) => {
+      if (prev.department) return prev;
+      return { ...prev, department: defaultDepartment };
+    });
+    setBatchForm((prev) => {
+      if (prev.department) return prev;
+      return { ...prev, department: defaultDepartment };
+    });
+    setSubjectForm((prev) => {
+      if (prev.department) return prev;
+      return { ...prev, department: defaultDepartment };
+    });
+  }, [departments]);
 
   const createUser = async (e) => {
     e.preventDefault();
@@ -137,9 +174,10 @@ const AdminDashboard = () => {
       const payload = { ...userForm };
       if (!payload.batch) delete payload.batch;
       if (payload.role !== "admin") delete payload.adminSecurityKey;
+      if (payload.role === "admin") payload.department = "";
 
       await api.post("/admin/users", payload);
-      setUserForm(initialUserForm);
+      setUserForm({ ...initialUserForm, department: departments[0]?.name || "" });
       toast.success("User created");
       await Promise.all([loadDashboard(), loadUsers(1), loadTeachers()]);
     } catch (error) {
@@ -174,11 +212,45 @@ const AdminDashboard = () => {
     }
   };
 
+  const createDepartment = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post("/admin/departments", departmentForm);
+      setDepartmentForm({ name: "", active: true });
+      toast.success("Department created");
+      await Promise.all([loadDepartments(), loadUsers(pagination.page), loadBatches(), loadSubjects()]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to create department");
+    }
+  };
+
+  const saveDepartment = async (id) => {
+    try {
+      await api.patch(`/admin/departments/${id}`, departmentDrafts[id]);
+      toast.success("Department updated");
+      await Promise.all([loadDepartments(), loadUsers(pagination.page), loadBatches(), loadSubjects()]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to update department");
+    }
+  };
+
+  const removeDepartment = async (id) => {
+    if (!window.confirm("Delete this department?")) return;
+
+    try {
+      await api.delete(`/admin/departments/${id}`);
+      toast.success("Department deleted");
+      await Promise.all([loadDepartments(), loadUsers(pagination.page), loadBatches(), loadSubjects()]);
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to delete department");
+    }
+  };
+
   const createBatch = async (e) => {
     e.preventDefault();
     try {
       await api.post("/admin/batches", batchForm);
-      setBatchForm({ name: "", department: "" });
+      setBatchForm({ name: "", department: departments[0]?.name || "" });
       toast.success("Batch created");
       await loadBatches();
     } catch (error) {
@@ -214,7 +286,7 @@ const AdminDashboard = () => {
       const payload = { ...subjectForm };
       if (!payload.teacher) delete payload.teacher;
       await api.post("/admin/subjects", payload);
-      setSubjectForm({ name: "", department: "", teacher: "" });
+      setSubjectForm({ name: "", department: departments[0]?.name || "", teacher: "" });
       toast.success("Subject created");
       await loadSubjects();
     } catch (error) {
@@ -255,19 +327,19 @@ const AdminDashboard = () => {
     <DashboardLayout title="Admin Dashboard">
       <section className="grid gap-4 md:grid-cols-5">
         <StatCard title="Total Users" value={dashboard.totalUsers} />
-        <StatCard title="Departments" value={dashboard.teachers} />
+        <StatCard title="Departments" value={departments.length} />
         <StatCard title="Students" value={dashboard.students} />
         <StatCard title="Active Assignments" value={dashboard.activeAssignments} />
         <StatCard title="Overdue Submissions" value={dashboard.overdueSubmissions} />
       </section>
 
-      <section className="mt-6 grid gap-6 xl:grid-cols-3">
+      <section className="mt-6 grid gap-6 xl:grid-cols-4">
         <form onSubmit={createUser} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <h2 className="text-lg font-semibold">Create User</h2>
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Name" value={userForm.name} onChange={(e) => setUserForm((p) => ({ ...p, name: e.target.value }))} required />
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Email" type="email" value={userForm.email} onChange={(e) => setUserForm((p) => ({ ...p, email: e.target.value }))} required />
           <PasswordField value={userForm.password} onChange={(e) => setUserForm((p) => ({ ...p, password: e.target.value }))} placeholder="Password" />
-          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.role} onChange={(e) => setUserForm((p) => ({ ...p, role: e.target.value }))}>
+          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.role} onChange={(e) => setUserForm((p) => ({ ...p, role: e.target.value, department: e.target.value === "admin" ? "" : p.department || departments[0]?.name || "" }))}>
             <option value="student">student</option>
             <option value="department">department</option>
             <option value="admin">admin</option>
@@ -278,7 +350,12 @@ const AdminDashboard = () => {
               <option key={batch._id} value={batch._id}>{batch.name}</option>
             ))}
           </select>
-          <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Department" value={userForm.department} onChange={(e) => setUserForm((p) => ({ ...p, department: e.target.value }))} />
+          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.department} onChange={(e) => setUserForm((p) => ({ ...p, department: e.target.value }))} disabled={userForm.role === "admin"}>
+            <option value="">{departments.length ? "Select department" : "No departments available"}</option>
+            {departments.map((department) => (
+              <option key={department._id} value={department.name}>{department.name}</option>
+            ))}
+          </select>
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Phone" value={userForm.phone} onChange={(e) => setUserForm((p) => ({ ...p, phone: e.target.value }))} />
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Avatar URL" value={userForm.avatarUrl} onChange={(e) => setUserForm((p) => ({ ...p, avatarUrl: e.target.value }))} />
           <textarea className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Bio" rows={2} value={userForm.bio} onChange={(e) => setUserForm((p) => ({ ...p, bio: e.target.value }))} />
@@ -291,14 +368,24 @@ const AdminDashboard = () => {
         <form onSubmit={createBatch} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <h2 className="text-lg font-semibold">Create Batch</h2>
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Batch Name" value={batchForm.name} onChange={(e) => setBatchForm((p) => ({ ...p, name: e.target.value }))} required />
-          <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Department" value={batchForm.department} onChange={(e) => setBatchForm((p) => ({ ...p, department: e.target.value }))} required />
+          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={batchForm.department} onChange={(e) => setBatchForm((p) => ({ ...p, department: e.target.value }))} required>
+            <option value="">{departments.length ? "Select department" : "No departments available"}</option>
+            {departments.map((department) => (
+              <option key={department._id} value={department.name}>{department.name}</option>
+            ))}
+          </select>
           <button className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white">Create Batch</button>
         </form>
 
         <form onSubmit={createSubject} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <h2 className="text-lg font-semibold">Create Subject</h2>
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Subject Name" value={subjectForm.name} onChange={(e) => setSubjectForm((p) => ({ ...p, name: e.target.value }))} required />
-          <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Department" value={subjectForm.department} onChange={(e) => setSubjectForm((p) => ({ ...p, department: e.target.value }))} required />
+          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={subjectForm.department} onChange={(e) => setSubjectForm((p) => ({ ...p, department: e.target.value }))} required>
+            <option value="">{departments.length ? "Select department" : "No departments available"}</option>
+            {departments.map((department) => (
+              <option key={department._id} value={department.name}>{department.name}</option>
+            ))}
+          </select>
           <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={subjectForm.teacher} onChange={(e) => setSubjectForm((p) => ({ ...p, teacher: e.target.value }))}>
             <option value="">No department</option>
             {teachers.map((teacher) => (
@@ -306,6 +393,16 @@ const AdminDashboard = () => {
             ))}
           </select>
           <button className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white">Create Subject</button>
+        </form>
+
+        <form onSubmit={createDepartment} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h2 className="text-lg font-semibold">Create Department</h2>
+          <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Department Name" value={departmentForm.name} onChange={(e) => setDepartmentForm((p) => ({ ...p, name: e.target.value }))} required />
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={Boolean(departmentForm.active)} onChange={(e) => setDepartmentForm((p) => ({ ...p, active: e.target.checked }))} />
+            Active
+          </label>
+          <button className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white">Create Department</button>
         </form>
       </section>
 
@@ -346,13 +443,20 @@ const AdminDashboard = () => {
                   <td className="px-2 py-2"><input className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.name || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], name: e.target.value } }))} /></td>
                   <td className="px-2 py-2"><input className="w-48 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.email || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], email: e.target.value } }))} /></td>
                   <td className="px-2 py-2">
-                    <select className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.role || "student"} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], role: e.target.value } }))}>
+                    <select className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.role || "student"} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], role: e.target.value, department: e.target.value === "admin" ? "" : p[u._id]?.department || departments[0]?.name || "" } }))}>
                       <option value="student">student</option>
                       <option value="department">department</option>
                       <option value="admin">admin</option>
                     </select>
                   </td>
-                  <td className="px-2 py-2"><input className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.department || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], department: e.target.value } }))} /></td>
+                  <td className="px-2 py-2">
+                    <select className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.department || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], department: e.target.value } }))} disabled={userDrafts[u._id]?.role === "admin"}>
+                      <option value="">{departments.length ? "Select" : "No departments"}</option>
+                      {departments.map((department) => (
+                        <option key={department._id} value={department.name}>{department.name}</option>
+                      ))}
+                    </select>
+                  </td>
                   <td className="px-2 py-2">
                     <select className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.batch || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], batch: e.target.value } }))}>
                       <option value="">No batch</option>
@@ -394,6 +498,46 @@ const AdminDashboard = () => {
         </div>
       </section>
 
+      <section className="mt-6 min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <h2 className="mb-3 text-lg font-semibold">Department Management</h2>
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[760px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-slate-700">
+                <th className="px-2 py-2">Name</th>
+                <th className="px-2 py-2">Active</th>
+                <th className="px-2 py-2">Users</th>
+                <th className="px-2 py-2">Batches</th>
+                <th className="px-2 py-2">Subjects</th>
+                <th className="px-2 py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {departments.map((department) => (
+                <tr key={department._id} className="border-b border-slate-100 dark:border-slate-800">
+                  <td className="px-2 py-2"><input className="w-48 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={departmentDrafts[department._id]?.name || ""} onChange={(e) => setDepartmentDrafts((p) => ({ ...p, [department._id]: { ...p[department._id], name: e.target.value } }))} /></td>
+                  <td className="px-2 py-2"><input type="checkbox" checked={Boolean(departmentDrafts[department._id]?.active)} onChange={(e) => setDepartmentDrafts((p) => ({ ...p, [department._id]: { ...p[department._id], active: e.target.checked } }))} /></td>
+                  <td className="px-2 py-2">{department.userCount || 0}</td>
+                  <td className="px-2 py-2">{department.batchCount || 0}</td>
+                  <td className="px-2 py-2">{department.subjectCount || 0}</td>
+                  <td className="px-2 py-2">
+                    <div className="flex flex-wrap gap-2">
+                      <button onClick={() => saveDepartment(department._id)} className="rounded bg-emerald-600 px-2 py-1 text-xs font-semibold text-white">Save</button>
+                      <button onClick={() => removeDepartment(department._id)} className="rounded bg-rose-600 px-2 py-1 text-xs font-semibold text-white">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {departments.length === 0 ? (
+                <tr>
+                  <td className="px-3 py-5 text-center text-slate-500" colSpan={6}>No departments found</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <section className="mt-6 grid gap-6 xl:grid-cols-2">
         <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <h2 className="mb-3 text-lg font-semibold">Batch Management</h2>
@@ -413,7 +557,14 @@ const AdminDashboard = () => {
                 {batches.map((batch) => (
                   <tr key={batch._id} className="border-b border-slate-100 dark:border-slate-800">
                     <td className="px-2 py-2"><input className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={batchDrafts[batch._id]?.name || ""} onChange={(e) => setBatchDrafts((p) => ({ ...p, [batch._id]: { ...p[batch._id], name: e.target.value } }))} /></td>
-                    <td className="px-2 py-2"><input className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={batchDrafts[batch._id]?.department || ""} onChange={(e) => setBatchDrafts((p) => ({ ...p, [batch._id]: { ...p[batch._id], department: e.target.value } }))} /></td>
+                    <td className="px-2 py-2">
+                      <select className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={batchDrafts[batch._id]?.department || ""} onChange={(e) => setBatchDrafts((p) => ({ ...p, [batch._id]: { ...p[batch._id], department: e.target.value } }))}>
+                        <option value="">Select department</option>
+                        {departments.map((department) => (
+                          <option key={department._id} value={department.name}>{department.name}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="px-2 py-2">{batch.studentCount || 0}</td>
                     <td className="px-2 py-2">{batch.teacherCount || 0}</td>
                     <td className="px-2 py-2">{batch.assignmentCount || 0}</td>
@@ -443,7 +594,7 @@ const AdminDashboard = () => {
                 <tr className="border-b border-slate-200 dark:border-slate-700">
                   <th className="px-2 py-2">Name</th>
                   <th className="px-2 py-2">Department</th>
-                  <th className="px-2 py-2">Department</th>
+                  <th className="px-2 py-2">Teacher</th>
                   <th className="px-2 py-2">Assignments</th>
                   <th className="px-2 py-2">Actions</th>
                 </tr>
@@ -452,7 +603,14 @@ const AdminDashboard = () => {
                 {subjects.map((subject) => (
                   <tr key={subject._id} className="border-b border-slate-100 dark:border-slate-800">
                     <td className="px-2 py-2"><input className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={subjectDrafts[subject._id]?.name || ""} onChange={(e) => setSubjectDrafts((p) => ({ ...p, [subject._id]: { ...p[subject._id], name: e.target.value } }))} /></td>
-                    <td className="px-2 py-2"><input className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={subjectDrafts[subject._id]?.department || ""} onChange={(e) => setSubjectDrafts((p) => ({ ...p, [subject._id]: { ...p[subject._id], department: e.target.value } }))} /></td>
+                    <td className="px-2 py-2">
+                      <select className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={subjectDrafts[subject._id]?.department || ""} onChange={(e) => setSubjectDrafts((p) => ({ ...p, [subject._id]: { ...p[subject._id], department: e.target.value } }))}>
+                        <option value="">Select department</option>
+                        {departments.map((department) => (
+                          <option key={department._id} value={department.name}>{department.name}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="px-2 py-2">
                       <select className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={subjectDrafts[subject._id]?.teacher || ""} onChange={(e) => setSubjectDrafts((p) => ({ ...p, [subject._id]: { ...p[subject._id], teacher: e.target.value } }))}>
                         <option value="">No department</option>

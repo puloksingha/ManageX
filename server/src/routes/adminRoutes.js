@@ -1,7 +1,9 @@
 import { Router } from "express";
 import { body } from "express-validator";
 import {
+  createDepartment,
   deleteBatch,
+  deleteDepartment,
   deleteSubject,
   createBatch,
   createSubject,
@@ -11,9 +13,11 @@ import {
   listBatches,
   listAuditLogs,
   listSubjects,
+  listDepartments,
   listUsers,
   resetPassword,
   updateBatch,
+  updateDepartment,
   updateSubject,
   updateUser
 } from "../controllers/adminController.js";
@@ -56,6 +60,15 @@ router.patch(
 );
 router.delete("/users/:id", deleteUser);
 router.patch("/users/:id/reset-password", [body("password").isLength({ min: 8 })], validate, resetPassword);
+router.get("/departments", listDepartments);
+router.post("/departments", [body("name").notEmpty(), body("active").optional().isBoolean()], validate, createDepartment);
+router.patch(
+  "/departments/:id",
+  [body("name").optional().notEmpty(), body("active").optional().isBoolean()],
+  validate,
+  updateDepartment
+);
+router.delete("/departments/:id", deleteDepartment);
 router.get("/batches", listBatches);
 router.post("/batches", [body("name").notEmpty(), body("department").notEmpty()], validate, createBatch);
 router.patch("/batches/:id", [body("name").optional().notEmpty(), body("department").optional().notEmpty()], validate, updateBatch);

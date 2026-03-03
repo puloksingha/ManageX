@@ -2,6 +2,7 @@ import "dotenv/config";
 import mongoose from "mongoose";
 import { connectDB } from "../config/db.js";
 import User from "../models/User.js";
+import Department from "../models/Department.js";
 import Batch from "../models/Batch.js";
 import Subject from "../models/Subject.js";
 import Assignment from "../models/Assignment.js";
@@ -145,9 +146,23 @@ const seedUsers = [
   }
 ];
 
+const seedDepartments = [
+  { name: "Administration" },
+  { name: "Computer Science" },
+  { name: "Electrical Engineering" },
+  { name: "Business Administration" },
+  { name: "Civil Engineering" },
+  { name: "Mathematics" }
+];
+
 const seedBatches = [
   { key: "cse61", name: "CSE-61", department: "Computer Science" },
-  { key: "eee24", name: "EEE-24", department: "Electrical Engineering" }
+  { key: "cse62", name: "CSE-62", department: "Computer Science" },
+  { key: "eee24", name: "EEE-24", department: "Electrical Engineering" },
+  { key: "eee25", name: "EEE-25", department: "Electrical Engineering" },
+  { key: "bba12", name: "BBA-12", department: "Business Administration" },
+  { key: "ce31", name: "CE-31", department: "Civil Engineering" },
+  { key: "math07", name: "MATH-07", department: "Mathematics" }
 ];
 
 const seedSubjects = [
@@ -168,6 +183,60 @@ const seedSubjects = [
     name: "Digital Circuits",
     department: "Electrical Engineering",
     teacherKey: "teacherEee"
+  },
+  {
+    key: "oop",
+    name: "Object Oriented Programming",
+    department: "Computer Science",
+    teacherKey: "teacherCse2"
+  },
+  {
+    key: "os",
+    name: "Operating Systems",
+    department: "Computer Science",
+    teacherKey: "teacherCse"
+  },
+  {
+    key: "powerSystems",
+    name: "Power Systems",
+    department: "Electrical Engineering",
+    teacherKey: "teacherEee2"
+  },
+  {
+    key: "signals",
+    name: "Signals and Systems",
+    department: "Electrical Engineering",
+    teacherKey: "teacherEee"
+  },
+  {
+    key: "accounting",
+    name: "Financial Accounting",
+    department: "Business Administration"
+  },
+  {
+    key: "marketing",
+    name: "Principles of Marketing",
+    department: "Business Administration"
+  },
+  {
+    key: "structural",
+    name: "Structural Analysis",
+    department: "Civil Engineering"
+  },
+  {
+    key: "surveying",
+    name: "Engineering Surveying",
+    department: "Civil Engineering"
+  },
+  {
+    key: "calculus",
+    name: "Calculus II",
+    department: "Mathematics"
+  },
+  {
+    key: "linearAlgebra",
+    name: "Linear Algebra",
+    department: "Mathematics"
   }
 ];
 
@@ -264,6 +333,17 @@ const upsertUser = async (payload) => {
   return existing;
 };
 
+const upsertDepartment = async (payload) => {
+  const name = String(payload.name || "").trim();
+  const department = await Department.findOneAndUpdate(
+    { normalizedName: name.toLowerCase() },
+    { name, active: true },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+  console.log(`Seeded department: ${name}`);
+  return department;
+};
+
 const upsertBatch = async (payload) => {
   const batch = await Batch.findOneAndUpdate(
     { name: payload.name },
@@ -324,6 +404,10 @@ const upsertSubmission = async (payload) => {
 const run = async () => {
   try {
     await connectDB();
+
+    for (const payload of seedDepartments) {
+      await upsertDepartment(payload);
+    }
 
     const usersByKey = {};
     for (const payload of seedUsers) {
@@ -435,8 +519,9 @@ const run = async () => {
       });
     }
 
-    const [users, batches, subjects, assignments, submissions] = await Promise.all([
+    const [users, departments, batches, subjects, assignments, submissions] = await Promise.all([
       User.countDocuments(),
+      Department.countDocuments(),
       Batch.countDocuments(),
       Subject.countDocuments(),
       Assignment.countDocuments(),
@@ -446,6 +531,7 @@ const run = async () => {
     console.log("");
     console.log("Seed completed.");
     console.log(`Users: ${users}`);
+    console.log(`Departments: ${departments}`);
     console.log(`Batches: ${batches}`);
     console.log(`Subjects: ${subjects}`);
     console.log(`Assignments: ${assignments}`);

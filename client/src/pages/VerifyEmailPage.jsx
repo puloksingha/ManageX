@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
 import AuthShell from "../layouts/AuthShell";
 
 const VerifyEmailPage = () => {
   const { verifyEmail, resendVerification } = useAuth();
+  const navigate = useNavigate();
   const [params] = useSearchParams();
   const initialEmail = useMemo(() => params.get("email") || "", [params]);
 
@@ -19,6 +20,7 @@ const VerifyEmailPage = () => {
     try {
       await verifyEmail(email, code);
       toast.success("Verified. You can login now.");
+      navigate("/login");
     } catch (error) {
       toast.error(error.response?.data?.message || "Verification failed");
     } finally {

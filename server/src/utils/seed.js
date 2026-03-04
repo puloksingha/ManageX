@@ -3,544 +3,102 @@ import mongoose from "mongoose";
 import { connectDB } from "../config/db.js";
 import User from "../models/User.js";
 import Department from "../models/Department.js";
-import Batch from "../models/Batch.js";
-import Subject from "../models/Subject.js";
-import Assignment from "../models/Assignment.js";
-import Submission from "../models/Submission.js";
 
-const seedUsers = [
-  {
-    key: "admin",
-    name: "System Admin",
-    email: "admin@college.edu",
-    password: "MANAGEX_ADMIN_2026",
+const adminEmail = (process.env.ADMIN_EMAIL || "").trim().toLowerCase();
+const adminPassword = (process.env.ADMIN_PASSWORD || "").trim();
+const adminName = (process.env.ADMIN_NAME || "System Admin").trim();
+const adminDepartment = "Administration";
+const seedDepartments = String(process.env.SEED_DEPARTMENTS || "")
+  .split(",")
+  .map((value) => value.trim())
+  .filter(Boolean);
+
+const assertRequiredEnv = () => {
+  const missing = [];
+  if (!process.env.MONGO_URI) missing.push("MONGO_URI");
+  if (!adminEmail) missing.push("ADMIN_EMAIL");
+  if (!adminPassword) missing.push("ADMIN_PASSWORD");
+
+  if (missing.length) {
+    throw new Error(`Missing required env vars: ${missing.join(", ")}`);
+  }
+};
+
+const upsertDepartment = async (name) => {
+  const trimmed = String(name || "").trim();
+  if (!trimmed) return null;
+
+  return Department.findOneAndUpdate(
+    { normalizedName: trimmed.toLowerCase() },
+    { name: trimmed, active: true },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  );
+};
+
+const ensureSingleAdmin = async () => {
+  const adminUsers = await User.find({ role: "admin" }).select("_id email");
+  const unexpectedAdmins = adminUsers.filter((user) => user.email !== adminEmail);
+
+  if (unexpectedAdmins.length > 0) {
+    throw new Error(
+      `Refusing to seed: found non-configured admin accounts: ${unexpectedAdmins
+        .map((user) => user.email)
+        .join(", ")}`
+    );
+  }
+
+  const existingConfiguredAdmin = adminUsers.find((user) => user.email === adminEmail);
+  if (adminUsers.length > 1) {
+    throw new Error("Refusing to seed: multiple admin accounts found.");
+  }
+
+  if (existingConfiguredAdmin) {
+    const admin = await User.findById(existingConfiguredAdmin._id);
+    admin.name = adminName;
+    admin.role = "admin";
+    admin.department = adminDepartment;
+    admin.emailVerified = true;
+    await admin.save();
+    return { created: false, admin };
+  }
+
+  const admin = await User.create({
+    name: adminName,
+    email: adminEmail,
+    password: adminPassword,
     role: "admin",
-    department: "Administration",
+    department: adminDepartment,
     emailVerified: true
-  },
-  {
-    key: "deptCse",
-    name: "Default Department CSE",
-    email: "department.cse@college.edu",
-    password: "Department@123",
-    role: "department",
-    department: "Computer Science",
-    emailVerified: true
-  },
-  {
-    key: "deptEee",
-    name: "Default Department EEE",
-    email: "department.eee@college.edu",
-    password: "Department@123",
-    role: "department",
-    department: "Electrical Engineering",
-    emailVerified: true
-  },
-  {
-    key: "teacherCse",
-    name: "Dr. jaffar iqbal",
-    email: "jaffar.iqbal@college.edu",
-    password: "Teacher@123",
-    role: "teacher",
-    department: "Computer Science",
-    emailVerified: true
-  },
-  {
-    key: "teacherEee",
-    name: "Prof. Arif Hasan",
-    email: "arif.hasan@college.edu",
-    password: "Teacher@123",
-    role: "teacher",
-    department: "Electrical Engineering",
-    emailVerified: true
-  },
-  {
-    key: "studentA",
-    name: "Ayesha Khan",
-    email: "ayesha.khan@college.edu",
-    password: "Student@123",
-    role: "student",
-    department: "Computer Science",
-    emailVerified: true
-  },
-  {
-    key: "studentB",
-    name: "Rafiul Islam",
-    email: "rafiul.islam@college.edu",
-    password:"Student@123",
-    role: "student",
-    department: "Computer Science",
-    emailVerified: true
-  },
-  {
-    key: "studentC",
-    name: "Nusrat Jahan",
-    email: "nusrat.jahan@college.edu",
-    password: "Student@123",
-    role: "student",
-    department: "Electrical Engineering",
-    emailVerified: true
-  },
-  {
-    key: "studentD",
-    name: "Tanim Ahmed",
-    email: "tanim.ahmed@college.edu",
-    password: "Student@123",
-    role: "student",
-    department: "Electrical Engineering",
-    emailVerified: true
-  },
-  {
-    key: "studentE",
-    name: "Rahul Das",
-    email: "rahul.das@college.edu",
-    password: "Student@123",
-    role: "student",
-    department: "Computer Science",
-    emailVerified: true
-  },
-  {
-    key: "studentF",
-    name: "Pawan Sen",
-    email: "pawan.sen@college.edu",
-    password: "Student@123",
-    role: "student",
-    department: "Computer Science",
-    emailVerified: true
-  },
-  {
-    key: "studentG",
-    name: "Maya Roy",
-    email: "maya.roy@college.edu",
-    password: "Student@123",
-    role: "student",
-    department: "Electrical Engineering",
-    emailVerified: true
-  },
-  {
-    key: "studentH",
-    name: "Sourav Dutta",
-    email: "sourav.dutta@college.edu",
-    password: "Student@123",
-    role: "student",
-    department: "Electrical Engineering",
-    emailVerified: true
-  },
-  {
-    key: "teacherCse2",
-    name: "Anika Paul",
-    email: "anika.paul@college.edu",
-    password: "Teacher@123",
-    role: "teacher",
-    department: "Computer Science",
-    emailVerified: true
-  },
-  {
-    key: "teacherEee2",
-    name: "Sanjay Ghosh",
-    email: "sanjay.ghosh@college.edu",
-    password: "Teacher@123",
-    role: "teacher",
-    department: "Electrical Engineering",
-    emailVerified: true
-  }
-];
+  });
 
-const seedDepartments = [
-  { name: "Administration" },
-  { name: "Computer Science" },
-  { name: "Electrical Engineering" },
-  { name: "Business Administration" },
-  { name: "Civil Engineering" },
-  { name: "Mathematics" }
-];
-
-const seedBatches = [
-  { key: "cse61", name: "CSE-61", department: "Computer Science" },
-  { key: "cse62", name: "CSE-62", department: "Computer Science" },
-  { key: "eee24", name: "EEE-24", department: "Electrical Engineering" },
-  { key: "eee25", name: "EEE-25", department: "Electrical Engineering" },
-  { key: "bba12", name: "BBA-12", department: "Business Administration" },
-  { key: "ce31", name: "CE-31", department: "Civil Engineering" },
-  { key: "math07", name: "MATH-07", department: "Mathematics" }
-];
-
-const seedSubjects = [
-  {
-    key: "algo",
-    name: "Algorithm Design",
-    department: "Computer Science",
-    teacherKey: "teacherCse"
-  },
-  {
-    key: "dbms",
-    name: "Database Systems",
-    department: "Computer Science",
-    teacherKey: "teacherCse"
-  },
-  {
-    key: "circuits",
-    name: "Digital Circuits",
-    department: "Electrical Engineering",
-    teacherKey: "teacherEee"
-  },
-  {
-    key: "oop",
-    name: "Object Oriented Programming",
-    department: "Computer Science",
-    teacherKey: "teacherCse2"
-  },
-  {
-    key: "os",
-    name: "Operating Systems",
-    department: "Computer Science",
-    teacherKey: "teacherCse"
-  },
-  {
-    key: "powerSystems",
-    name: "Power Systems",
-    department: "Electrical Engineering",
-    teacherKey: "teacherEee2"
-  },
-  {
-    key: "signals",
-    name: "Signals and Systems",
-    department: "Electrical Engineering",
-    teacherKey: "teacherEee"
-  },
-  {
-    key: "accounting",
-    name: "Financial Accounting",
-    department: "Business Administration"
-  },
-  {
-    key: "marketing",
-    name: "Principles of Marketing",
-    department: "Business Administration"
-  },
-  {
-    key: "structural",
-    name: "Structural Analysis",
-    department: "Civil Engineering"
-  },
-  {
-    key: "surveying",
-    name: "Engineering Surveying",
-    department: "Civil Engineering"
-  },
-  {
-    key: "calculus",
-    name: "Calculus II",
-    department: "Mathematics"
-  },
-  {
-    key: "linearAlgebra",
-    name: "Linear Algebra",
-    department: "Mathematics"
-  }
-];
-
-const daysFromNow = (days) => {
-  const dt = new Date();
-  dt.setDate(dt.getDate() + days);
-  return dt;
-};
-
-const seedAssignments = [
-  {
-    key: "algoProject",
-    title: "Algorithm Analysis Project",
-    description: "Analyze time complexity of divide-and-conquer algorithms.",
-    subjectKey: "algo",
-    createdByKey: "deptCse",
-    batchKey: "cse61",
-    dueDate: daysFromNow(7),
-    maxMarks: 100,
-    attachments: []
-  },
-  {
-    key: "dbLab",
-    title: "DBMS Lab Report",
-    description: "Design ER diagram and normalize the provided dataset.",
-    subjectKey: "dbms",
-    createdByKey: "teacherCse",
-    batchKey: "cse61",
-    dueDate: daysFromNow(-2),
-    maxMarks: 50,
-    attachments: []
-  },
-  {
-    key: "circuitsQuiz",
-    title: "Digital Logic Quiz",
-    description: "Submit answers for combinational logic design questions.",
-    subjectKey: "circuits",
-    createdByKey: "deptEee",
-    batchKey: "eee24",
-    dueDate: daysFromNow(5),
-    maxMarks: 30,
-    attachments: []
-  }
-];
-
-const seedSubmissions = [
-  {
-    assignmentKey: "algoProject",
-    studentKey: "studentA",
-    fileUrl: "/uploads/demo-algo-ayesha.pdf",
-    notes: "Added recurrence relation proofs.",
-    status: "Submitted"
-  },
-  {
-    assignmentKey: "dbLab",
-    studentKey: "studentB",
-    fileUrl: "/uploads/demo-dbms-rafiul.pdf",
-    notes: "Normalization included up to 3NF.",
-    status: "Graded",
-    marks: 42,
-    feedback: "Good work. Improve query optimization section."
-  },
-  {
-    assignmentKey: "dbLab",
-    studentKey: "studentA",
-    fileUrl: "/uploads/demo-dbms-ayesha.pdf",
-    notes: "Late due to internet issue.",
-    status: "Late"
-  },
-  {
-    assignmentKey: "circuitsQuiz",
-    studentKey: "studentC",
-    fileUrl: "/uploads/demo-circuits-nusrat.pdf",
-    notes: "Implemented K-map simplification steps.",
-    status: "Submitted"
-  }
-];
-
-const upsertUser = async (payload) => {
-  const existing = await User.findOne({ email: payload.email });
-  if (!existing) {
-    const created = await User.create(payload);
-    console.log(`Created user: ${payload.email}`);
-    return created;
-  }
-
-  existing.name = payload.name;
-  existing.role = payload.role;
-  existing.department = payload.department;
-  existing.emailVerified = true;
-  existing.password = payload.password;
-  await existing.save();
-  console.log(`Updated user: ${payload.email}`);
-  return existing;
-};
-
-const upsertDepartment = async (payload) => {
-  const name = String(payload.name || "").trim();
-  const department = await Department.findOneAndUpdate(
-    { normalizedName: name.toLowerCase() },
-    { name, active: true },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
-  console.log(`Seeded department: ${name}`);
-  return department;
-};
-
-const upsertBatch = async (payload) => {
-  const batch = await Batch.findOneAndUpdate(
-    { name: payload.name },
-    { department: payload.department },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
-  console.log(`Seeded batch: ${payload.name}`);
-  return batch;
-};
-
-const upsertSubject = async (payload) => {
-  const subject = await Subject.findOneAndUpdate(
-    { name: payload.name, department: payload.department },
-    { teacher: payload.teacher },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
-  console.log(`Seeded subject: ${payload.name}`);
-  return subject;
-};
-
-const upsertAssignment = async (payload) => {
-  const assignment = await Assignment.findOneAndUpdate(
-    { title: payload.title, batch: payload.batch },
-    {
-      description: payload.description,
-      subject: payload.subject,
-      createdBy: payload.createdBy,
-      dueDate: payload.dueDate,
-      maxMarks: payload.maxMarks,
-      attachments: payload.attachments || []
-    },
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
-  console.log(`Seeded assignment: ${payload.title}`);
-  return assignment;
-};
-
-const upsertSubmission = async (payload) => {
-  const update = {
-    fileUrl: payload.fileUrl,
-    notes: payload.notes || "",
-    status: payload.status || "Submitted",
-    submittedAt: new Date()
-  };
-
-  if (typeof payload.marks !== "undefined") update.marks = payload.marks;
-  if (typeof payload.feedback !== "undefined") update.feedback = payload.feedback;
-
-  const submission = await Submission.findOneAndUpdate(
-    { assignment: payload.assignment, student: payload.student },
-    update,
-    { new: true, upsert: true, setDefaultsOnInsert: true }
-  );
-  console.log(`Seeded submission: ${payload.student} -> ${payload.assignment}`);
-  return submission;
+  return { created: true, admin };
 };
 
 const run = async () => {
   try {
+    assertRequiredEnv();
     await connectDB();
 
-    for (const payload of seedDepartments) {
-      await upsertDepartment(payload);
+    const baseDepartments = [adminDepartment, ...seedDepartments];
+    const uniqueDepartments = [...new Set(baseDepartments)];
+    for (const name of uniqueDepartments) {
+      await upsertDepartment(name);
     }
 
-    const usersByKey = {};
-    for (const payload of seedUsers) {
-      usersByKey[payload.key] = await upsertUser({
-        name: payload.name,
-        email: payload.email,
-        password: payload.password,
-        role: payload.role,
-        department: payload.department,
-        emailVerified: payload.emailVerified
-      });
-    }
-
-    const batchesByKey = {};
-    for (const payload of seedBatches) {
-      batchesByKey[payload.key] = await upsertBatch(payload);
-    }
-
-    const cseStudents = [
-      usersByKey.studentA?._id,
-      usersByKey.studentB?._id,
-      usersByKey.studentE?._id,
-      usersByKey.studentF?._id
-    ].filter(Boolean);
-    const eeeStudents = [
-      usersByKey.studentC?._id,
-      usersByKey.studentD?._id,
-      usersByKey.studentG?._id,
-      usersByKey.studentH?._id
-    ].filter(Boolean);
-    const cseTeachers = [
-      usersByKey.deptCse?._id,
-      usersByKey.teacherCse?._id,
-      usersByKey.teacherCse2?._id
-    ].filter(Boolean);
-    const eeeTeachers = [
-      usersByKey.deptEee?._id,
-      usersByKey.teacherEee?._id,
-      usersByKey.teacherEee2?._id
-    ].filter(Boolean);
-
-    if (batchesByKey.cse61) {
-      batchesByKey.cse61.students = cseStudents;
-      batchesByKey.cse61.teachers = cseTeachers;
-      await batchesByKey.cse61.save();
-    }
-    if (batchesByKey.eee24) {
-      batchesByKey.eee24.students = eeeStudents;
-      batchesByKey.eee24.teachers = eeeTeachers;
-      await batchesByKey.eee24.save();
-    }
-
-    if (usersByKey.studentA) usersByKey.studentA.batch = batchesByKey.cse61?._id;
-    if (usersByKey.studentB) usersByKey.studentB.batch = batchesByKey.cse61?._id;
-    if (usersByKey.studentE) usersByKey.studentE.batch = batchesByKey.cse61?._id;
-    if (usersByKey.studentF) usersByKey.studentF.batch = batchesByKey.cse61?._id;
-    if (usersByKey.studentC) usersByKey.studentC.batch = batchesByKey.eee24?._id;
-    if (usersByKey.studentD) usersByKey.studentD.batch = batchesByKey.eee24?._id;
-    if (usersByKey.studentG) usersByKey.studentG.batch = batchesByKey.eee24?._id;
-    if (usersByKey.studentH) usersByKey.studentH.batch = batchesByKey.eee24?._id;
-
-    await Promise.all(
-      [
-        usersByKey.studentA,
-        usersByKey.studentB,
-        usersByKey.studentC,
-        usersByKey.studentD,
-        usersByKey.studentE,
-        usersByKey.studentF,
-        usersByKey.studentG,
-        usersByKey.studentH
-      ]
-        .filter(Boolean)
-        .map((student) => student.save())
-    );
-
-    const subjectsByKey = {};
-    for (const payload of seedSubjects) {
-      subjectsByKey[payload.key] = await upsertSubject({
-        name: payload.name,
-        department: payload.department,
-        teacher: usersByKey[payload.teacherKey]?._id
-      });
-    }
-
-    const assignmentsByKey = {};
-    for (const payload of seedAssignments) {
-      assignmentsByKey[payload.key] = await upsertAssignment({
-        title: payload.title,
-        description: payload.description,
-        subject: subjectsByKey[payload.subjectKey]?._id,
-        createdBy: usersByKey[payload.createdByKey]?._id,
-        batch: batchesByKey[payload.batchKey]?._id,
-        dueDate: payload.dueDate,
-        maxMarks: payload.maxMarks,
-        attachments: payload.attachments
-      });
-    }
-
-    for (const payload of seedSubmissions) {
-      await upsertSubmission({
-        assignment: assignmentsByKey[payload.assignmentKey]?._id,
-        student: usersByKey[payload.studentKey]?._id,
-        fileUrl: payload.fileUrl,
-        notes: payload.notes,
-        status: payload.status,
-        marks: payload.marks,
-        feedback: payload.feedback
-      });
-    }
-
-    const [users, departments, batches, subjects, assignments, submissions] = await Promise.all([
-      User.countDocuments(),
-      Department.countDocuments(),
-      Batch.countDocuments(),
-      Subject.countDocuments(),
-      Assignment.countDocuments(),
-      Submission.countDocuments()
-    ]);
+    const adminResult = await ensureSingleAdmin();
+    const [users, departments] = await Promise.all([User.countDocuments(), Department.countDocuments()]);
 
     console.log("");
-    console.log("Seed completed.");
+    console.log("Production bootstrap completed.");
+    console.log(`Admin: ${adminResult.admin.email} (${adminResult.created ? "created" : "verified"})`);
     console.log(`Users: ${users}`);
     console.log(`Departments: ${departments}`);
-    console.log(`Batches: ${batches}`);
-    console.log(`Subjects: ${subjects}`);
-    console.log(`Assignments: ${assignments}`);
-    console.log(`Submissions: ${submissions}`);
   } catch (error) {
-    console.error(error);
+    console.error(error.message || error);
+    process.exitCode = 1;
   } finally {
     await mongoose.connection.close();
-    process.exit(0);
+    process.exit(process.exitCode || 0);
   }
 };
 

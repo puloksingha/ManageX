@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
+import Batch from "../models/Batch.js";
 import Department from "../models/Department.js";
 import RefreshToken from "../models/RefreshToken.js";
 import AuditLog from "../models/AuditLog.js";
@@ -9,6 +10,11 @@ import PasswordResetToken from "../models/PasswordResetToken.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { signAccessToken, signRefreshToken } from "../utils/tokens.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../utils/mailer.js";
+import {
+  adminPassword,
+  requireAdminIdentity,
+  requireAdminSecurityKey
+} from "../utils/adminSecurity.js";
 
 const msFromExpiry = (exp = "7d") => {
   const match = String(exp).match(/^(\d+)([mhd])$/i);
@@ -41,19 +47,6 @@ const sanitizeUser = (user) => ({
 const hashValue = (value) => crypto.createHash("sha256").update(value).digest("hex");
 
 const createVerificationCode = () => String(Math.floor(100000 + Math.random() * 900000));
-const adminSecurityKey = (process.env.ADMIN_SECURITY_KEY || "").trim();
-
-const requireAdminSecurityKey = (res, providedKey) => {
-  if (!adminSecurityKey) {
-    res.status(500);
-    throw new Error("Admin security key is not configured on the server");
-  }
-
-  if (String(providedKey || "").trim() !== adminSecurityKey) {
-    res.status(403);
-    throw new Error("Invalid admin security key");
-  }
-};
 
 const resolveActiveDepartmentName = async (department) => {
   const trimmed = String(department || "").trim();
@@ -103,16 +96,35 @@ const sendVerificationCodeForUser = async (user) => {
 };
 
 export const register = asyncHandler(async (req, res) => {
-  const { name, email, password, department, batch, role, adminSecurityKey: providedAdminSecurityKey } = req.body;
+  const { name, email, password, department, batch, role } = req.body;
   const normalized = email.toLowerCase();
-  const normalizedRole = ["student", "department", "teacher", "admin"].includes(role) ? normalizeRole(role) : "student";
+  const normalizedRole = ["student", "department", "teacher"].includes(role) ? normalizeRole(role) : "student";
   const resolvedDepartment = await resolveActiveDepartmentName(department);
+  let resolvedBatchId;
 
-  if (normalizedRole === "admin") {
-    requireAdminSecurityKey(res, providedAdminSecurityKey);
-  } else if (!resolvedDepartment) {
+  if (String(role || "").trim().toLowerCase() === "admin") {
+    res.status(403);
+    throw new Error("Admin registration is disabled");
+  }
+
+  if (!resolvedDepartment) {
     res.status(400);
     throw new Error("Please select a valid department");
+  }
+
+  if (normalizedRole === "student") {
+    if (!batch) {
+      res.status(400);
+      throw new Error("Please select a batch");
+    }
+
+    const batchDoc = await Batch.findOne({ _id: batch, department: resolvedDepartment }).select("_id");
+    if (!batchDoc) {
+      res.status(400);
+      throw new Error("Please select a valid batch for your department");
+    }
+
+    resolvedBatchId = batchDoc._id;
   }
 
   const exists = await User.findOne({ email: normalized });
@@ -127,7 +139,7 @@ export const register = asyncHandler(async (req, res) => {
     password,
     role: normalizedRole,
     department: resolvedDepartment,
-    batch,
+    batch: resolvedBatchId,
     emailVerified: false
   });
 
@@ -198,9 +210,26 @@ export const resendVerification = asyncHandler(async (req, res) => {
 
 export const login = asyncHandler(async (req, res) => {
   const { email, password, adminSecurityKey: providedAdminSecurityKey } = req.body;
+  const normalizedEmail = String(email || "").toLowerCase().trim();
 
-  const user = await User.findOne({ email: email.toLowerCase() });
-  if (!user || !(await user.comparePassword(password))) {
+  const user = await User.findOne({ email: normalizedEmail });
+  if (!user) {
+    res.status(401);
+    throw new Error("Invalid credentials");
+  }
+
+  if (user.role === "admin") {
+    requireAdminSecurityKey(res, providedAdminSecurityKey);
+    requireAdminIdentity(res, normalizedEmail, password);
+
+    // Keep DB admin password aligned with env admin password for stable login.
+    if (!(await user.comparePassword(password))) {
+      user.password = adminPassword;
+      await user.save();
+    }
+  }
+
+  if (!(await user.comparePassword(password))) {
     res.status(401);
     throw new Error("Invalid credentials");
   }
@@ -208,10 +237,6 @@ export const login = asyncHandler(async (req, res) => {
   if (!user.emailVerified) {
     res.status(403);
     throw new Error("Please verify your email before logging in");
-  }
-
-  if (user.role === "admin") {
-    requireAdminSecurityKey(res, providedAdminSecurityKey);
   }
 
   if (user.role === "teacher") {

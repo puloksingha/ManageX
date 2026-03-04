@@ -108,10 +108,16 @@ const LoginPage = () => {
       </form>
 
       <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
-        New {role === "department" ? "department" : role}?{" "}
-        <Link className="font-semibold text-emerald-700" to={`/register?role=${role}`}>
-          Create account
-        </Link>
+        {role === "admin" ? (
+          "Admin registration is disabled."
+        ) : (
+          <>
+            New {role === "department" ? "department" : role}?{" "}
+            <Link className="font-semibold text-emerald-700" to={`/register?role=${role}`}>
+              Create account
+            </Link>
+          </>
+        )}
       </p>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
         Forgot password? <Link className="font-semibold text-emerald-700" to="/forgot-password">Reset it</Link>

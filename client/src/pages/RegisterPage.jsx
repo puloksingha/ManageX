@@ -19,20 +19,22 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const roleFromQuery = params.get("role");
-  const initialRole = roleFromQuery === "teacher" ? "department" : ["student", "department", "admin"].includes(roleFromQuery) ? roleFromQuery : "student";
+  const initialRole = roleFromQuery === "teacher" ? "department" : ["student", "department"].includes(roleFromQuery) ? roleFromQuery : "student";
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
     department: "",
-    role: initialRole,
-    adminSecurityKey: ""
+    batch: "",
+    role: initialRole
   });
   const [departments, setDepartments] = useState([]);
+  const [batches, setBatches] = useState([]);
   const [departmentsLoading, setDepartmentsLoading] = useState(true);
+  const [batchesLoading, setBatchesLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const requiresDepartment = form.role !== "admin";
+  const requiresDepartment = true;
 
   useEffect(() => {
     const loadDepartments = async () => {
@@ -51,13 +53,46 @@ const RegisterPage = () => {
 
   useEffect(() => {
     if (!requiresDepartment) {
-      setForm((prev) => ({ ...prev, department: "" }));
+      setForm((prev) => ({ ...prev, department: "", batch: "" }));
+      setBatches([]);
       return;
     }
 
     if (form.department || !departments.length) return;
     setForm((prev) => ({ ...prev, department: departments[0].name }));
   }, [requiresDepartment, form.department, departments]);
+
+  useEffect(() => {
+    const loadBatches = async () => {
+      if (form.role !== "student" || !form.department) {
+        setBatches([]);
+        setBatchesLoading(false);
+        setForm((prev) => (prev.batch ? { ...prev, batch: "" } : prev));
+        return;
+      }
+
+      setBatchesLoading(true);
+      try {
+        const { data } = await api.get("/meta/public-batches", {
+          params: { department: form.department }
+        });
+        const nextBatches = data.batches || [];
+        setBatches(nextBatches);
+        setForm((prev) => {
+          if (!nextBatches.length) return prev.batch ? { ...prev, batch: "" } : prev;
+          const hasCurrent = nextBatches.some((batch) => batch._id === prev.batch);
+          return hasCurrent ? prev : { ...prev, batch: nextBatches[0]._id };
+        });
+      } catch {
+        setBatches([]);
+        setForm((prev) => (prev.batch ? { ...prev, batch: "" } : prev));
+      } finally {
+        setBatchesLoading(false);
+      }
+    };
+
+    loadBatches();
+  }, [form.role, form.department]);
 
   const roleLabel = useMemo(() => {
     if (form.role === "department") return "Teacher";
@@ -73,6 +108,7 @@ const RegisterPage = () => {
   const validateForm = () => {
     if (form.name.trim().length < 2) return "Name must be at least 2 characters";
     if (requiresDepartment && !form.department) return "Please select a department";
+    if (form.role === "student" && !form.batch) return "Please select a batch";
     const failedRule = passwordRules.find((rule) => !rule.test(form.password));
     if (failedRule) return `Password rule failed: ${failedRule.label}`;
     return "";
@@ -100,8 +136,8 @@ const RegisterPage = () => {
         payload.department = form.department;
       }
 
-      if (form.role === "admin" && form.adminSecurityKey.trim()) {
-        payload.adminSecurityKey = form.adminSecurityKey.trim();
+      if (form.role === "student") {
+        payload.batch = form.batch;
       }
 
       await register(payload);
@@ -126,18 +162,7 @@ const RegisterPage = () => {
         >
           <option value="student">Student Register</option>
           <option value="department">Teacher Register</option>
-          <option value="admin">Admin Register</option>
         </select>
-        {form.role === "admin" ? (
-          <input
-            className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
-            placeholder="Admin Security Key"
-            type="password"
-            value={form.adminSecurityKey}
-            onChange={(e) => setForm((prev) => ({ ...prev, adminSecurityKey: e.target.value }))}
-            required
-          />
-        ) : null}
 
         <input
           className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
@@ -170,8 +195,27 @@ const RegisterPage = () => {
             ))}
           </select>
         ) : null}
+        {form.role === "student" ? (
+          <select
+            className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800"
+            value={form.batch}
+            onChange={(e) => setForm((prev) => ({ ...prev, batch: e.target.value }))}
+            disabled={batchesLoading || batches.length === 0}
+            required
+          >
+            <option value="">Select Batch</option>
+            {batches.map((batch) => (
+              <option key={batch._id} value={batch._id}>
+                {batch.name}
+              </option>
+            ))}
+          </select>
+        ) : null}
         {requiresDepartment && !departmentsLoading && departments.length === 0 ? (
           <p className="text-xs text-rose-600">No active departments available. Contact admin.</p>
+        ) : null}
+        {form.role === "student" && !batchesLoading && form.department && batches.length === 0 ? (
+          <p className="text-xs text-rose-600">No batches found for this department. Contact admin.</p>
         ) : null}
 
         <PasswordField
@@ -193,7 +237,11 @@ const RegisterPage = () => {
 
         <button
           className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white"
-          disabled={submitting || (requiresDepartment && (departmentsLoading || departments.length === 0))}
+          disabled={
+            submitting ||
+            (requiresDepartment && (departmentsLoading || departments.length === 0)) ||
+            (form.role === "student" && (batchesLoading || batches.length === 0))
+          }
         >
           {submitting ? "Creating account..." : "Create account"}
         </button>

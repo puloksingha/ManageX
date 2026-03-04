@@ -6,22 +6,12 @@ import Subject from "../models/Subject.js";
 import Department from "../models/Department.js";
 import AuditLog from "../models/AuditLog.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import {
+  adminEmail
+} from "../utils/adminSecurity.js";
 
 const safeUser =
   "_id name email role department batch emailVerified avatarUrl phone bio createdAt updatedAt";
-const adminSecurityKey = (process.env.ADMIN_SECURITY_KEY || "").trim();
-
-const requireAdminSecurityKey = (res, providedKey) => {
-  if (!adminSecurityKey) {
-    res.status(500);
-    throw new Error("Admin security key is not configured on the server");
-  }
-
-  if (String(providedKey || "").trim() !== adminSecurityKey) {
-    res.status(403);
-    throw new Error("Invalid admin security key");
-  }
-};
 
 const rolesWithDepartment = new Set(["student", "department", "teacher"]);
 
@@ -38,8 +28,16 @@ const resolveDepartmentName = async (department, { activeOnly = true } = {}) => 
 
 export const createUser = asyncHandler(async (req, res) => {
   const role = req.body.role || "student";
+  const email = req.body.email.toLowerCase().trim();
+
   if (role === "admin") {
-    requireAdminSecurityKey(res, req.body.adminSecurityKey);
+    res.status(403);
+    throw new Error("Creating admin users is disabled");
+  }
+
+  if (adminEmail && email === adminEmail) {
+    res.status(403);
+    throw new Error("Configured admin email is reserved for admin account only");
   }
 
   let resolvedDepartment = "";
@@ -51,7 +49,6 @@ export const createUser = asyncHandler(async (req, res) => {
     }
   }
 
-  const email = req.body.email.toLowerCase().trim();
   const exists = await User.findOne({ email });
   if (exists) {
     res.status(409);
@@ -144,7 +141,8 @@ export const updateUser = asyncHandler(async (req, res) => {
   }
 
   if (updates.role === "admin" && currentUser.role !== "admin") {
-    requireAdminSecurityKey(res, req.body.adminSecurityKey);
+    res.status(403);
+    throw new Error("Promoting users to admin is disabled");
   }
 
   if (typeof updates.email !== "undefined") {
@@ -153,6 +151,16 @@ export const updateUser = asyncHandler(async (req, res) => {
     if (existing) {
       res.status(409);
       throw new Error("Email already exists");
+    }
+
+    if (currentUser.role === "admin" && adminEmail && updates.email !== adminEmail) {
+      res.status(403);
+      throw new Error("Admin email must match configured admin email");
+    }
+
+    if (currentUser.role !== "admin" && adminEmail && updates.email === adminEmail) {
+      res.status(403);
+      throw new Error("Configured admin email is reserved for admin account only");
     }
   }
 

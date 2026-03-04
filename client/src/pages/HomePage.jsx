@@ -48,12 +48,6 @@ const HomePage = () => {
             >
               Department Register
             </Link>
-            <Link
-              to="/register?role=admin"
-              className="rounded-lg border border-slate-300 px-5 py-3 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-white/60 hover:shadow-sm dark:border-slate-700 dark:hover:bg-slate-800/60 sm:text-base"
-            >
-              Admin Register
-            </Link>
           </div>
         </section>
 

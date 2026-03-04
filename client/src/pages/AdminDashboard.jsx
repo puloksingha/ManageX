@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import DashboardLayout from "../layouts/DashboardLayout";
 import { api } from "../api/client";
@@ -48,6 +48,10 @@ const AdminDashboard = () => {
   const [userDrafts, setUserDrafts] = useState({});
   const [batchDrafts, setBatchDrafts] = useState({});
   const [subjectDrafts, setSubjectDrafts] = useState({});
+  const batchesForCreateUser = useMemo(
+    () => batches.filter((batch) => batch.department === userForm.department),
+    [batches, userForm.department]
+  );
 
   const loadDashboard = async () => {
     const { data } = await api.get("/admin/dashboard");
@@ -168,10 +172,25 @@ const AdminDashboard = () => {
     });
   }, [departments]);
 
+  useEffect(() => {
+    setUserForm((prev) => {
+      if (prev.role !== "student") {
+        return prev.batch ? { ...prev, batch: "" } : prev;
+      }
+      const filtered = batches.filter((batch) => batch.department === prev.department);
+      if (!filtered.length) {
+        return prev.batch ? { ...prev, batch: "" } : prev;
+      }
+      const exists = filtered.some((batch) => batch._id === prev.batch);
+      return exists ? prev : { ...prev, batch: filtered[0]._id };
+    });
+  }, [batches, userForm.role, userForm.department]);
+
   const createUser = async (e) => {
     e.preventDefault();
     try {
       const payload = { ...userForm };
+      if (payload.role !== "student") delete payload.batch;
       if (!payload.batch) delete payload.batch;
       if (payload.role !== "admin") delete payload.adminSecurityKey;
       if (payload.role === "admin") payload.department = "";
@@ -188,6 +207,7 @@ const AdminDashboard = () => {
   const saveUser = async (id) => {
     try {
       const payload = { ...userDrafts[id] };
+      if (payload.role !== "student") payload.batch = "";
       if (!payload.batch) payload.batch = "";
       if (payload.role !== "admin") delete payload.adminSecurityKey;
 
@@ -339,16 +359,10 @@ const AdminDashboard = () => {
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Name" value={userForm.name} onChange={(e) => setUserForm((p) => ({ ...p, name: e.target.value }))} required />
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Email" type="email" value={userForm.email} onChange={(e) => setUserForm((p) => ({ ...p, email: e.target.value }))} required />
           <PasswordField value={userForm.password} onChange={(e) => setUserForm((p) => ({ ...p, password: e.target.value }))} placeholder="Password" />
-          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.role} onChange={(e) => setUserForm((p) => ({ ...p, role: e.target.value, department: e.target.value === "admin" ? "" : p.department || departments[0]?.name || "" }))}>
+          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.role} onChange={(e) => setUserForm((p) => ({ ...p, role: e.target.value, department: e.target.value === "admin" ? "" : p.department || departments[0]?.name || "", batch: e.target.value === "student" ? p.batch : "" }))}>
             <option value="student">student</option>
             <option value="department">department</option>
             <option value="admin">admin</option>
-          </select>
-          <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.batch} onChange={(e) => setUserForm((p) => ({ ...p, batch: e.target.value }))}>
-            <option value="">No batch</option>
-            {batches.map((batch) => (
-              <option key={batch._id} value={batch._id}>{batch.name}</option>
-            ))}
           </select>
           <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.department} onChange={(e) => setUserForm((p) => ({ ...p, department: e.target.value }))} disabled={userForm.role === "admin"}>
             <option value="">{departments.length ? "Select department" : "No departments available"}</option>
@@ -356,6 +370,14 @@ const AdminDashboard = () => {
               <option key={department._id} value={department.name}>{department.name}</option>
             ))}
           </select>
+          {userForm.role === "student" ? (
+            <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={userForm.batch} onChange={(e) => setUserForm((p) => ({ ...p, batch: e.target.value }))} disabled={batchesForCreateUser.length === 0} required>
+              <option value="">{batchesForCreateUser.length ? "Select batch" : "No batches for selected department"}</option>
+              {batchesForCreateUser.map((batch) => (
+                <option key={batch._id} value={batch._id}>{batch.name}</option>
+              ))}
+            </select>
+          ) : null}
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Phone" value={userForm.phone} onChange={(e) => setUserForm((p) => ({ ...p, phone: e.target.value }))} />
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Avatar URL" value={userForm.avatarUrl} onChange={(e) => setUserForm((p) => ({ ...p, avatarUrl: e.target.value }))} />
           <textarea className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Bio" rows={2} value={userForm.bio} onChange={(e) => setUserForm((p) => ({ ...p, bio: e.target.value }))} />
@@ -443,14 +465,14 @@ const AdminDashboard = () => {
                   <td className="px-2 py-2"><input className="w-36 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.name || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], name: e.target.value } }))} /></td>
                   <td className="px-2 py-2"><input className="w-48 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.email || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], email: e.target.value } }))} /></td>
                   <td className="px-2 py-2">
-                    <select className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.role || "student"} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], role: e.target.value, department: e.target.value === "admin" ? "" : p[u._id]?.department || departments[0]?.name || "" } }))}>
+                    <select className="rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.role || "student"} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], role: e.target.value, department: e.target.value === "admin" ? "" : p[u._id]?.department || departments[0]?.name || "", batch: "" } }))}>
                       <option value="student">student</option>
                       <option value="department">department</option>
                       <option value="admin">admin</option>
                     </select>
                   </td>
                   <td className="px-2 py-2">
-                    <select className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.department || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], department: e.target.value } }))} disabled={userDrafts[u._id]?.role === "admin"}>
+                    <select className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.department || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], department: e.target.value, batch: "" } }))} disabled={userDrafts[u._id]?.role === "admin"}>
                       <option value="">{departments.length ? "Select" : "No departments"}</option>
                       {departments.map((department) => (
                         <option key={department._id} value={department.name}>{department.name}</option>
@@ -458,11 +480,13 @@ const AdminDashboard = () => {
                     </select>
                   </td>
                   <td className="px-2 py-2">
-                    <select className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.batch || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], batch: e.target.value } }))}>
-                      <option value="">No batch</option>
-                      {batches.map((batch) => (
-                        <option key={batch._id} value={batch._id}>{batch.name}</option>
-                      ))}
+                    <select className="w-32 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.batch || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], batch: e.target.value } }))} disabled={(userDrafts[u._id]?.role || "student") !== "student"}>
+                      <option value="">{(userDrafts[u._id]?.role || "student") === "student" ? "Select batch" : "No batch"}</option>
+                      {batches
+                        .filter((batch) => batch.department === (userDrafts[u._id]?.department || ""))
+                        .map((batch) => (
+                          <option key={batch._id} value={batch._id}>{batch.name}</option>
+                        ))}
                     </select>
                   </td>
                   <td className="px-2 py-2"><input className="w-28 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.phone || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], phone: e.target.value } }))} /></td>
@@ -643,4 +667,5 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+
 

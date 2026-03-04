@@ -44,9 +44,10 @@ router.post(
       .withMessage("Password must include a special character"),
     body("role")
       .optional()
-      .isIn(["student", "department", "teacher", "admin"])
-      .withMessage("Role must be student, department, or admin"),
+      .isIn(["student", "department", "teacher"])
+      .withMessage("Role must be student, department, or teacher"),
     body("department").optional().isString().isLength({ max: 120 }).withMessage("Department must be up to 120 characters"),
+    body("batch").optional({ values: "falsy" }).isMongoId().withMessage("Invalid batch"),
     body("adminSecurityKey").optional({ values: "falsy" }).isString().isLength({ min: 4, max: 120 })
   ],
   validate,

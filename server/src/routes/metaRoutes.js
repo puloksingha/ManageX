@@ -16,6 +16,19 @@ router.get(
 );
 
 router.get(
+  "/public-batches",
+  asyncHandler(async (req, res) => {
+    const department = String(req.query.department || "").trim();
+    if (!department) {
+      return res.json({ batches: [] });
+    }
+
+    const batches = await Batch.find({ department }).sort({ name: 1 }).select("name department");
+    res.json({ batches });
+  })
+);
+
+router.get(
   "/batches",
   auth,
   asyncHandler(async (req, res) => {

@@ -42,7 +42,7 @@ router.post(
       .matches(/[a-z]/)
       .matches(/[0-9]/)
       .matches(/[^A-Za-z0-9]/),
-    body("role").isIn(["student", "department", "teacher", "admin"]),
+    body("role").isIn(["student", "department", "teacher"]),
     body("adminSecurityKey").optional().isString()
   ],
   validate,
@@ -52,7 +52,7 @@ router.patch(
   "/users/:id",
   [
     body("email").optional().isEmail(),
-    body("role").optional().isIn(["student", "department", "teacher", "admin"]),
+    body("role").optional().isIn(["student", "department", "teacher"]),
     body("adminSecurityKey").optional().isString()
   ],
   validate,

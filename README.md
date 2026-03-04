@@ -1,76 +1,151 @@
 # ManageX - College Assignment Management System
 
-Production-style full-stack app with role-based panels for `student`, `teacher`, and `admin`.
+ManageX is a MERN-style assignment management platform with role-based workflows for students, departments/teachers, and administrators.
 
-## Stack
-- Client: React + Vite + Tailwind CSS
-- Server: Node.js + Express + MongoDB (Mongoose)
-- Auth: JWT access + refresh tokens + email verification (OTP)
-- Uploads: Multer (PDF/DOCX/ZIP for assignments, image avatar uploads)
+## Tech Stack
+- Frontend: React + Vite + Tailwind CSS
+- Backend: Node.js + Express + MongoDB (Mongoose)
+- Authentication: JWT access + refresh tokens, email verification (OTP), password reset
+- Uploads: Multer-based file uploads for assignments/submissions and profile avatars
 
-## Features Implemented
-- Public home page
-- Student self-registration
-- Real-email verification workflow (register -> OTP -> verify -> login)
-- Password recovery workflow (forgot password email + secure reset)
-- Secure login with role-based routing
-- Refresh-token rotation with reuse detection and logout-all support
-- Student dashboard: view assignments + upload submissions
-- Teacher dashboard: create assignments + grade submissions
-- Admin dashboard: full user control + batch/subject management + user table filter/pagination
-- Profile page for all roles (edit profile + avatar upload)
-- Audit logging and protected APIs
+## Core Features
+- Public landing page with role-focused onboarding
+- Registration + email verification flow
+- Secure login with role-based access control
+- Refresh-token rotation and logout-all session invalidation
+- Student dashboard for assignment viewing and submission uploads
+- Department dashboard for assignment creation, submission review, and grading
+- Admin dashboard for users, departments, batches, subjects, and audit logs
+- Profile management with avatar upload
 
-## Project Structure
-- `client/` React frontend
-- `server/` Express backend
+## Roles
+- `student`
+- `department` (primary teacher workflow role)
+- `teacher` (supported alias in auth/admin flows)
+- `admin`
 
-## Environment Setup
+## Repository Structure
+- `client/` - React frontend
+- `server/` - Express API
+- `server/uploads/` - uploaded files (served from `/uploads`)
 
-### Backend (`server/.env`)
-Use `.env.example` and fill values:
-- `MONGO_URI`
-- `ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`
-- `CLIENT_URL`
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`
-- `MAIL_FROM`
-- `EMAIL_MOCK=true` for local development (prints verification code in server logs)
+## Local Setup
 
-### Frontend (`client/.env`)
-- `VITE_API_BASE_URL=http://localhost:5000/api`
+### Prerequisites
+- Node.js 18+
+- npm 9+
+- MongoDB running locally or remotely
 
-## Run Locally
+### 1) Configure environment files
 
-### 1) Backend
+Backend:
+```bash
+cd server
+copy .env.example .env
+```
+
+Frontend:
+```bash
+cd client
+copy .env.example .env
+```
+
+### 2) Install dependencies
+
+Backend:
 ```bash
 cd server
 npm install
-npm run seed
-npm run dev
 ```
 
-### 2) Frontend
+Frontend:
 ```bash
 cd client
 npm install
+```
+
+### 3) Seed initial data (admin + departments)
+
+Set these in `server/.env` before seeding:
+- `MONGO_URI`
+- `ADMIN_EMAIL`
+- `ADMIN_PASSWORD`
+
+Then run:
+```bash
+cd server
+npm run seed
+```
+
+### 4) Run in development
+
+Backend:
+```bash
+cd server
 npm run dev
 ```
 
-## Default Seed Users
-- `admin@college.edu` / `Admin@123`
-- `teacher@college.edu` / `Teacher@123`
-- `student@college.edu` / `Student@123`
+Frontend:
+```bash
+cd client
+npm run dev
+```
+
+Frontend default: `http://localhost:5173`  
+Backend default: `http://localhost:5000`
+
+## Environment Variables
+
+### Backend (`server/.env`)
+Required for normal operation:
+- `PORT` (default `5000`)
+- `MONGO_URI`
+- `CLIENT_URL`
+- `ACCESS_TOKEN_SECRET`
+- `REFRESH_TOKEN_SECRET`
+- `ACCESS_TOKEN_EXPIRES` (default `15m`)
+- `REFRESH_TOKEN_EXPIRES` (default `7d`)
+- `ADMIN_SECURITY_KEY`
+- `SMTP_HOST`
+- `SMTP_PORT`
+- `SMTP_USER`
+- `SMTP_PASS`
+- `MAIL_FROM`
+- `EMAIL_MOCK` (`true` for local email mocking)
+- `ADMIN_EMAIL` (required for `npm run seed`)
+- `ADMIN_PASSWORD` (required for `npm run seed`)
+- `ADMIN_NAME` (optional, defaults to `System Admin`)
+- `SEED_DEPARTMENTS` (optional comma-separated list)
+
+### Frontend (`client/.env`)
+- `VITE_API_BASE_URL` (default `http://localhost:5000/api`)
+
+## NPM Scripts
+
+### Server (`server/package.json`)
+- `npm run dev` - Start API with nodemon
+- `npm run start` - Start API with node
+- `npm run seed` - Bootstrap admin + departments
+
+### Client (`client/package.json`)
+- `npm run dev` - Start Vite dev server
+- `npm run build` - Build production assets
+- `npm run preview` - Preview built app
 
 ## API Overview
-- Auth: `/api/auth/register`, `/api/auth/verify-email`, `/api/auth/resend-verification`, `/api/auth/login`, `/api/auth/refresh`
-- Auth recovery/session: `/api/auth/forgot-password`, `/api/auth/reset-password`, `/api/auth/logout-all`
+- Health: `GET /api/health`
+- Auth: `/api/auth/register`, `/api/auth/verify-email`, `/api/auth/resend-verification`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`, `/api/auth/logout-all`, `/api/auth/me`, `/api/auth/forgot-password`, `/api/auth/reset-password`
 - Profiles: `/api/profiles/me`, `/api/profiles/me/avatar`
 - Assignments: `/api/assignments`
-- Submissions: `/api/submissions`
-- Admin: `/api/admin/dashboard`, `/api/admin/users`, `/api/admin/batches`, `/api/admin/subjects`
-- Meta: `/api/meta/subjects`, `/api/meta/batches`
+- Submissions: `/api/submissions`, `/api/submissions/:id/grade`
+- Admin: `/api/admin/dashboard`, `/api/admin/users`, `/api/admin/departments`, `/api/admin/batches`, `/api/admin/subjects`, `/api/admin/audit-logs`
+- Meta: `/api/meta/departments`, `/api/meta/public-batches`, `/api/meta/batches`, `/api/meta/subjects`
+
+## Upload Rules
+- Assignment/submission files: PDF, DOCX, ZIP (max 10 MB)
+- Avatar files: JPG, PNG, WEBP (max 5 MB)
 
 ## License
 This project is licensed under the MIT License.
 
-See the [LICENSE](./LICENSE) file for full terms, permissions, and limitations.
+See the [LICENSE](./LICENSE) file for full terms.

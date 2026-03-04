@@ -69,3 +69,8 @@ npm run dev
 - Submissions: `/api/submissions`
 - Admin: `/api/admin/dashboard`, `/api/admin/users`, `/api/admin/batches`, `/api/admin/subjects`
 - Meta: `/api/meta/subjects`, `/api/meta/batches`
+
+## License
+This project is licensed under the MIT License.
+
+See the [LICENSE](./LICENSE) file for full terms, permissions, and limitations.

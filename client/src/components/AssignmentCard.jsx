@@ -1,37 +1,50 @@
-const statusStyles = {
-  Submitted: "bg-emerald-100 text-emerald-700",
-  Graded: "bg-blue-100 text-blue-700",
-  Pending: "bg-amber-100 text-amber-700",
-  Late: "bg-rose-100 text-rose-700",
-  Overdue: "bg-rose-100 text-rose-700",
-  Open: "bg-sky-100 text-sky-700"
-};
-
 import { apiOrigin } from "../api/client";
 
+const statusStyles = {
+  Submitted: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+  Graded: "bg-cyan-100 text-cyan-700 dark:bg-cyan-950/40 dark:text-cyan-300",
+  Pending: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  Late: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  Overdue: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+  Open: "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+};
+
 const AssignmentCard = ({ title, subject, dueDate, status, attachments = [] }) => {
+  const due = dueDate ? new Date(dueDate) : null;
+  const dueLabel = due && !Number.isNaN(due.getTime()) ? due.toLocaleString() : "No due date";
+
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="font-semibold">{title}</h3>
+    <article className="group rounded-[1.75rem] border border-white/70 bg-white/85 p-5 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/85">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">{subject || "General subject"}</p>
+          <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-slate-100">{title}</h3>
+        </div>
         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[status] || statusStyles.Pending}`}>
-          {status}
+          {status || "Pending"}
         </span>
       </div>
-      <p className="mt-2 text-sm text-slate-500 dark:text-slate-300">Subject: {subject || "-"}</p>
-      <p className="text-sm text-slate-500 dark:text-slate-300">Due: {new Date(dueDate).toLocaleDateString()}</p>
-      {attachments.length ? (
-        <div className="mt-2">
+
+      <div className="mt-5 rounded-2xl bg-slate-50/90 p-4 dark:bg-slate-950/70">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Due date</p>
+        <p className="mt-2 text-sm font-medium text-slate-700 dark:text-slate-200">{dueLabel}</p>
+      </div>
+
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <p className="text-sm text-slate-500 dark:text-slate-300">
+          {attachments.length ? `${attachments.length} attachment${attachments.length > 1 ? "s" : ""}` : "No attachment"}
+        </p>
+        {attachments.length ? (
           <a
             href={`${apiOrigin}${attachments[0]}`}
             target="_blank"
             rel="noreferrer"
-            className="text-sm font-semibold text-emerald-600 hover:underline"
+            className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
           >
-            View attachment
+            View file
           </a>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </article>
   );
 };

@@ -4,12 +4,27 @@ import DashboardLayout from "../layouts/DashboardLayout";
 import { api } from "../api/client";
 import PasswordField from "../components/PasswordField";
 
-const StatCard = ({ title, value }) => (
-  <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-    <p className="text-sm text-slate-500 dark:text-slate-300">{title}</p>
-    <p className="mt-2 text-2xl font-bold">{value}</p>
-  </div>
+const toneStyles = {
+  emerald: "from-emerald-500 to-emerald-600 shadow-emerald-500/20",
+  cyan: "from-cyan-500 to-cyan-600 shadow-cyan-500/20",
+  amber: "from-amber-500 to-amber-600 shadow-amber-500/20",
+  slate: "from-slate-700 to-slate-900 shadow-slate-500/20",
+  rose: "from-rose-500 to-rose-600 shadow-rose-500/20",
+};
+
+const StatCard = ({ title, value, description, tone = "slate" }) => (
+  <article className={`rounded-[1.75rem] bg-gradient-to-br ${toneStyles[tone]} p-5 text-white shadow-lg`}>
+    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">{title}</p>
+    <p className="mt-3 text-3xl font-black tracking-tight">{value}</p>
+    <p className="mt-3 text-sm leading-6 text-white/80">{description}</p>
+  </article>
 );
+
+const creationPanelClass =
+  "space-y-4 rounded-[1.75rem] border border-white/70 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85";
+
+const sectionPanelClass =
+  "min-w-0 max-w-full overflow-hidden rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85";
 
 const initialUserForm = {
   name: "",
@@ -345,17 +360,43 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      <section className="grid gap-4 md:grid-cols-5">
-        <StatCard title="Total Users" value={dashboard.totalUsers} />
-        <StatCard title="Departments" value={departments.length} />
-        <StatCard title="Students" value={dashboard.students} />
-        <StatCard title="Active Assignments" value={dashboard.activeAssignments} />
-        <StatCard title="Overdue Submissions" value={dashboard.overdueSubmissions} />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <StatCard title="Total Users" value={dashboard.totalUsers} description="All non-admin records currently managed by the system." tone="slate" />
+        <StatCard title="Departments" value={departments.length} description="Academic units configured for onboarding and assignment flow." tone="emerald" />
+        <StatCard title="Students" value={dashboard.students} description="Student accounts available for submissions and profile tracking." tone="cyan" />
+        <StatCard title="Active Assignments" value={dashboard.activeAssignments} description="Assignments currently open across the platform." tone="amber" />
+        <StatCard title="Overdue" value={dashboard.overdueSubmissions} description="Submissions that are already beyond the expected schedule." tone="rose" />
+      </section>
+
+      <section className={`${sectionPanelClass} mt-6`}>
+        <div className="grid gap-6 xl:grid-cols-[1fr_0.8fr] xl:items-center">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">Operations center</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Manage users, departments, batches, and subjects from one admin view.</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">
+              This screen is the strongest demonstration of your CRUD flow. Keep the data clean, show the relationships between
+              departments and batches, and use the filters to explain control over the system.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <article className="rounded-3xl bg-slate-50/90 p-4 dark:bg-slate-950/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Teachers</p>
+              <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">{dashboard.teachers}</p>
+            </article>
+            <article className="rounded-3xl bg-slate-50/90 p-4 dark:bg-slate-950/70">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Subjects</p>
+              <p className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">{subjects.length}</p>
+            </article>
+          </div>
+        </div>
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-4">
-        <form onSubmit={createUser} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold">Create User</h2>
+        <form onSubmit={createUser} className={creationPanelClass}>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">Create user</p>
+            <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">User account setup</h2>
+          </div>
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Name" value={userForm.name} onChange={(e) => setUserForm((p) => ({ ...p, name: e.target.value }))} required />
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Email" type="email" value={userForm.email} onChange={(e) => setUserForm((p) => ({ ...p, email: e.target.value }))} required />
           <PasswordField value={userForm.password} onChange={(e) => setUserForm((p) => ({ ...p, password: e.target.value }))} placeholder="Password" />
@@ -384,11 +425,14 @@ const AdminDashboard = () => {
           {userForm.role === "admin" ? (
             <input className="w-full rounded-lg border border-amber-400 px-3 py-2 dark:bg-slate-800" placeholder="Admin Security Key" type="password" value={userForm.adminSecurityKey} onChange={(e) => setUserForm((p) => ({ ...p, adminSecurityKey: e.target.value }))} required />
           ) : null}
-          <button className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white">Create</button>
+          <button className="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500">Create</button>
         </form>
 
-        <form onSubmit={createBatch} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold">Create Batch</h2>
+        <form onSubmit={createBatch} className={creationPanelClass}>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-400">Create batch</p>
+            <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">Batch configuration</h2>
+          </div>
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Batch Name" value={batchForm.name} onChange={(e) => setBatchForm((p) => ({ ...p, name: e.target.value }))} required />
           <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={batchForm.department} onChange={(e) => setBatchForm((p) => ({ ...p, department: e.target.value }))} required>
             <option value="">{departments.length ? "Select department" : "No departments available"}</option>
@@ -396,11 +440,14 @@ const AdminDashboard = () => {
               <option key={department._id} value={department.name}>{department.name}</option>
             ))}
           </select>
-          <button className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white">Create Batch</button>
+          <button className="w-full rounded-xl bg-cyan-600 py-3 font-semibold text-white transition hover:bg-cyan-500">Create Batch</button>
         </form>
 
-        <form onSubmit={createSubject} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold">Create Subject</h2>
+        <form onSubmit={createSubject} className={creationPanelClass}>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-700 dark:text-amber-400">Create subject</p>
+            <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">Subject assignment</h2>
+          </div>
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Subject Name" value={subjectForm.name} onChange={(e) => setSubjectForm((p) => ({ ...p, name: e.target.value }))} required />
           <select className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" value={subjectForm.department} onChange={(e) => setSubjectForm((p) => ({ ...p, department: e.target.value }))} required>
             <option value="">{departments.length ? "Select department" : "No departments available"}</option>
@@ -414,23 +461,29 @@ const AdminDashboard = () => {
               <option key={teacher._id} value={teacher._id}>{teacher.name}</option>
             ))}
           </select>
-          <button className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white">Create Subject</button>
+          <button className="w-full rounded-xl bg-amber-600 py-3 font-semibold text-white transition hover:bg-amber-500">Create Subject</button>
         </form>
 
-        <form onSubmit={createDepartment} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="text-lg font-semibold">Create Department</h2>
+        <form onSubmit={createDepartment} className={creationPanelClass}>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Create department</p>
+            <h2 className="mt-2 text-xl font-black text-slate-900 dark:text-slate-100">Department structure</h2>
+          </div>
           <input className="w-full rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-800" placeholder="Department Name" value={departmentForm.name} onChange={(e) => setDepartmentForm((p) => ({ ...p, name: e.target.value }))} required />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={Boolean(departmentForm.active)} onChange={(e) => setDepartmentForm((p) => ({ ...p, active: e.target.checked }))} />
             Active
           </label>
-          <button className="w-full rounded-lg bg-emerald-600 py-2 font-semibold text-white">Create Department</button>
+          <button className="w-full rounded-xl bg-slate-900 py-3 font-semibold text-white transition hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white">Create Department</button>
         </form>
       </section>
 
-      <section className="mt-6 min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+      <section className={`${sectionPanelClass} mt-6`}>
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-          <h2 className="text-lg font-semibold">Student and Department Information</h2>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">User directory</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Student and department information</h2>
+          </div>
           <form onSubmit={applyFilters} className="grid w-full gap-2 sm:flex sm:w-auto sm:flex-wrap">
             <input className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 sm:w-64" placeholder="Search name/email/department" value={search} onChange={(e) => setSearch(e.target.value)} />
             <select className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 sm:w-auto" value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
@@ -438,7 +491,7 @@ const AdminDashboard = () => {
               <option value="student">student</option>
               <option value="department">department</option>
             </select>
-            <button className="rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white sm:w-auto">Apply</button>
+            <button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500 sm:w-auto">Apply</button>
           </form>
         </div>
 
@@ -516,14 +569,17 @@ const AdminDashboard = () => {
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-500 dark:text-slate-300">Page {pagination.page} of {pagination.totalPages} | Total {pagination.total}</p>
           <div className="flex gap-2">
-            <button disabled={pagination.page <= 1} onClick={() => loadUsers(pagination.page - 1)} className="rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-50 dark:border-slate-700">Previous</button>
-            <button disabled={pagination.page >= pagination.totalPages} onClick={() => loadUsers(pagination.page + 1)} className="rounded border border-slate-300 px-3 py-1 text-sm disabled:opacity-50 dark:border-slate-700">Next</button>
+            <button disabled={pagination.page <= 1} onClick={() => loadUsers(pagination.page - 1)} className="rounded-xl border border-slate-300 px-4 py-2 text-sm disabled:opacity-50 dark:border-slate-700">Previous</button>
+            <button disabled={pagination.page >= pagination.totalPages} onClick={() => loadUsers(pagination.page + 1)} className="rounded-xl border border-slate-300 px-4 py-2 text-sm disabled:opacity-50 dark:border-slate-700">Next</button>
           </div>
         </div>
       </section>
 
-      <section className="mt-6 min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-        <h2 className="mb-3 text-lg font-semibold">Department Management</h2>
+      <section className={`${sectionPanelClass} mt-6`}>
+        <div className="mb-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Departments</p>
+          <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Department management</h2>
+        </div>
         <div className="w-full overflow-x-auto">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead>
@@ -563,8 +619,11 @@ const AdminDashboard = () => {
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-2">
-        <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-3 text-lg font-semibold">Batch Management</h2>
+        <div className={sectionPanelClass}>
+          <div className="mb-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Batches</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Batch management</h2>
+          </div>
           <div className="w-full overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>
@@ -610,8 +669,11 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
-          <h2 className="mb-3 text-lg font-semibold">Subject Management</h2>
+        <div className={sectionPanelClass}>
+          <div className="mb-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Subjects</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Subject management</h2>
+          </div>
           <div className="w-full overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
               <thead>

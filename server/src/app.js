@@ -13,6 +13,7 @@ import submissionRoutes from "./routes/submissionRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import metaRoutes from "./routes/metaRoutes.js";
+import { allowedOrigins } from "./config/env.js";
 import { errorHandler, notFound } from "./middleware/error.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,12 +21,21 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(
-  cors({
-    origin: process.env.CLIENT_URL,
-    credentials: true
-  })
-);
+app.set("trust proxy", 1);
+app.disable("x-powered-by");
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error("Origin is not allowed by CORS"));
+  }
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" }

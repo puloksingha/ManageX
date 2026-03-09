@@ -118,7 +118,7 @@ Required for normal operation:
 - `SEED_DEPARTMENTS` (optional comma-separated list)
 
 ### Frontend (`client/.env`)
-- `VITE_API_BASE_URL` (default `http://localhost:5000/api`)
+- `VITE_API_BASE_URL` (use your backend URL, for example `https://api.example.com/api`; use `/api` only if frontend and backend are served from the same origin)
 
 ## NPM Scripts
 
@@ -144,6 +144,35 @@ Required for normal operation:
 ## Upload Rules
 - Assignment/submission files: PDF, DOCX, ZIP (max 10 MB)
 - Avatar files: JPG, PNG, WEBP (max 5 MB)
+
+## Deployment Notes
+
+### Recommended demo deployment
+- Frontend: deploy `client/` as a static site
+- Backend: deploy `server/` as a Node web service
+- Database: MongoDB Atlas
+
+### Required production environment setup
+
+Backend:
+- set `NODE_ENV=production`
+- set `MONGO_URI` to your hosted MongoDB connection string
+- set `CLIENT_URL` to your frontend URL
+- optionally set `CLIENT_URLS` as a comma-separated allowlist if you use multiple frontend URLs
+- replace `ACCESS_TOKEN_SECRET`, `REFRESH_TOKEN_SECRET`, `ADMIN_SECURITY_KEY`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` with fresh values
+- keep `EMAIL_MOCK=true` for demo deployments without real email delivery, or configure SMTP and set `EMAIL_MOCK=false`
+
+Frontend:
+- set `VITE_API_BASE_URL` to your deployed backend URL ending with `/api`
+
+### SPA routing support
+- `client/vercel.json` is included for Vercel deployments
+- `client/public/_redirects` is included for Netlify-style static hosting
+
+### Important limitations
+- Uploaded files are stored in `server/uploads/`; use a host with persistent disk if you need uploaded files to survive restarts
+- The tracked secrets in local `.env` files must be rotated before any public deployment
+- For teacher/demo access, you can keep email mocking enabled and use pre-verified accounts
 
 ## License
 This project is licensed under the MIT License.

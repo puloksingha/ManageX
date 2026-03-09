@@ -1,7 +1,21 @@
 import axios from "axios";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
-export const apiOrigin = baseURL.replace(/\/api\/?$/, "");
+const rawBaseURL = String(import.meta.env.VITE_API_BASE_URL || "/api").trim();
+const baseURL = rawBaseURL.replace(/\/+$/, "");
+
+const resolveApiOrigin = (url) => {
+  if (/^https?:\/\//i.test(url)) {
+    return url.replace(/\/api\/?$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+
+  return "";
+};
+
+export const apiOrigin = resolveApiOrigin(baseURL);
 
 export const api = axios.create({
   baseURL

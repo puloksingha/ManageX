@@ -36,6 +36,7 @@ const sanitizeUser = (user) => ({
   name: user.name,
   email: user.email,
   role: normalizeRole(user.role),
+  approved: user.approved !== false,
   department: user.department,
   batch: user.batch,
   emailVerified: user.emailVerified,
@@ -138,6 +139,7 @@ export const register = asyncHandler(async (req, res) => {
     email: normalized,
     password,
     role: normalizedRole,
+    approved: normalizedRole === "department" ? false : true,
     department: resolvedDepartment,
     batch: resolvedBatchId,
     emailVerified: false
@@ -152,7 +154,10 @@ export const register = asyncHandler(async (req, res) => {
   });
 
   res.status(201).json({
-    message: "Registration successful. Verify your email to sign in.",
+    message:
+      normalizedRole === "department"
+        ? "Registration successful. Verify your email, then wait for admin approval before signing in."
+        : "Registration successful. Verify your email to sign in.",
     user: sanitizeUser(user)
   });
 });
@@ -237,6 +242,11 @@ export const login = asyncHandler(async (req, res) => {
   if (!user.emailVerified) {
     res.status(403);
     throw new Error("Please verify your email before logging in");
+  }
+
+  if (normalizeRole(user.role) === "department" && user.approved === false) {
+    res.status(403);
+    throw new Error("Your account is awaiting admin approval");
   }
 
   if (user.role === "teacher") {

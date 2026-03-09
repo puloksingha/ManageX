@@ -11,7 +11,7 @@ import {
 } from "../utils/adminSecurity.js";
 
 const safeUser =
-  "_id name email role department batch emailVerified avatarUrl phone bio createdAt updatedAt";
+  "_id name email role department batch approved emailVerified avatarUrl phone bio createdAt updatedAt";
 
 const rolesWithDepartment = new Set(["student", "department", "teacher"]);
 
@@ -60,6 +60,7 @@ export const createUser = asyncHandler(async (req, res) => {
     email,
     password: req.body.password,
     role,
+    approved: true,
     department: resolvedDepartment,
     batch: req.body.batch || undefined,
     phone: req.body.phone || "",
@@ -128,7 +129,7 @@ export const listUsers = asyncHandler(async (req, res) => {
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
-  const allowed = ["name", "email", "department", "role", "batch", "emailVerified", "phone", "bio", "avatarUrl"];
+  const allowed = ["name", "email", "department", "role", "batch", "approved", "emailVerified", "phone", "bio", "avatarUrl"];
   const updates = {};
   for (const key of allowed) {
     if (typeof req.body[key] !== "undefined") updates[key] = req.body[key];

@@ -15,6 +15,10 @@ export const auth = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: "User no longer exists" });
     }
+    const normalizedRole = user.role === "teacher" ? "department" : user.role;
+    if (normalizedRole === "department" && user.approved === false) {
+      return res.status(403).json({ message: "Your account is awaiting admin approval" });
+    }
     req.user = user;
     next();
   } catch (error) {

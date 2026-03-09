@@ -43,6 +43,7 @@ router.post(
       .matches(/[0-9]/)
       .matches(/[^A-Za-z0-9]/),
     body("role").isIn(["student", "department", "teacher"]),
+    body("approved").optional().isBoolean(),
     body("adminSecurityKey").optional().isString()
   ],
   validate,
@@ -53,6 +54,7 @@ router.patch(
   [
     body("email").optional().isEmail(),
     body("role").optional().isIn(["student", "department", "teacher"]),
+    body("approved").optional().isBoolean(),
     body("adminSecurityKey").optional().isString()
   ],
   validate,

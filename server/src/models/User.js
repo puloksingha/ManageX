@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       default: "student"
     },
+    approved: { type: Boolean, default: true },
     emailVerified: { type: Boolean, default: false },
     avatarUrl: { type: String, default: "" },
     bio: { type: String, default: "", trim: true, maxlength: 300 },

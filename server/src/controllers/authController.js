@@ -213,6 +213,33 @@ export const resendVerification = asyncHandler(async (req, res) => {
   res.json({ message: "Verification code sent" });
 });
 
+export const approvalStatus = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email: String(email || "").toLowerCase().trim() });
+
+  if (!user) {
+    res.status(404);
+    throw new Error("Account not found");
+  }
+
+  const normalizedRole = normalizeRole(user.role);
+  const status =
+    normalizedRole !== "department"
+      ? "not-required"
+      : !user.emailVerified
+        ? "email-verification-required"
+        : user.approved === false
+          ? "pending"
+          : "approved";
+
+  res.json({
+    status,
+    role: normalizedRole,
+    emailVerified: Boolean(user.emailVerified),
+    approved: user.approved !== false,
+  });
+});
+
 export const login = asyncHandler(async (req, res) => {
   const { email, password, adminSecurityKey: providedAdminSecurityKey } = req.body;
   const normalizedEmail = String(email || "").toLowerCase().trim();

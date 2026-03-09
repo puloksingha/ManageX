@@ -57,7 +57,7 @@ const roleHighlights = [
   },
   {
     title: "Admins",
-    description: "Control users, departments, batches, and subjects from a central system that is easy to demonstrate.",
+    description: "Control users, departments, batches, and subjects from a central system built for operational oversight.",
     accent: "from-slate-900/10 to-slate-100",
   },
 ];
@@ -65,15 +65,15 @@ const roleHighlights = [
 const faqs = [
   {
     question: "Who is this platform for?",
-    answer: "ManageX is designed for college projects and internal academic workflow demos with separate student, department, and admin roles.",
+    answer: "ManageX is built for academic organizations that need a structured workflow for assignments, submissions, grading, and administration.",
   },
   {
     question: "What problem does it solve?",
     answer: "It replaces manual assignment tracking across chats, email, and scattered files with one structured submission and review flow.",
   },
   {
-    question: "Why is it good for presentation?",
-    answer: "The project clearly demonstrates authentication, role-based access, CRUD operations, file upload, grading flow, and dashboard design in one app.",
+    question: "How does ManageX stay organized?",
+    answer: "Role-based access, centralized records, and shared workflow visibility keep students, departments, and administrators aligned in one system.",
   },
 ];
 
@@ -100,6 +100,12 @@ const HomePage = () => {
             <a href="#faq" className="text-sm font-semibold text-slate-600 transition hover:text-slate-900 dark:text-slate-300 dark:hover:text-white">
               FAQ
             </a>
+            <Link
+              to="/login?role=admin"
+              className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-amber-800 transition hover:bg-amber-100 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200 dark:hover:bg-amber-950/50"
+            >
+              Admin Login
+            </Link>
           </nav>
           <div className="flex gap-3">
             <Link className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold transition hover:-translate-y-0.5 hover:shadow-sm" to="/login">
@@ -119,10 +125,10 @@ const HomePage = () => {
         <section className="grid gap-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div className="animate-fade-up delay-1">
             <p className="inline-flex rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-              College workflow platform
+              Academic workflow platform
             </p>
             <h1 className="mt-5 max-w-3xl text-4xl font-black leading-tight tracking-tight text-slate-900 dark:text-slate-100 sm:text-5xl lg:text-6xl">
-              Present assignment management like a real academic system.
+              Modernize assignment management with one connected academic system.
             </h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 dark:text-slate-300 md:text-lg">
               ManageX brings assignment publishing, submissions, grading, onboarding, and admin control into one clear workflow
@@ -237,11 +243,11 @@ const HomePage = () => {
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Built For Every Role</p>
               <h2 className="mt-3 text-3xl font-black text-slate-900 dark:text-slate-100 md:text-4xl">
-                One project, three clear user experiences.
+                One platform, three focused user experiences.
               </h2>
             </div>
             <p className="max-w-xl text-sm leading-7 text-slate-600 dark:text-slate-300">
-              This makes the system easier to explain during viva or project presentation because each role has a clear purpose.
+              Each role has a focused workflow, while the full system stays connected through shared academic operations.
             </p>
           </div>
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
@@ -323,10 +329,10 @@ const HomePage = () => {
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">FAQ</p>
             <h2 className="mt-3 text-3xl font-black text-slate-900 dark:text-slate-100 md:text-4xl">
-              Short answers for project presentation.
+              Frequently asked questions.
             </h2>
             <p className="mt-4 text-base leading-8 text-slate-600 dark:text-slate-300">
-              These are the points most reviewers or teachers usually ask when they want to understand the project quickly.
+              Clear answers for teams evaluating how the platform handles academic workflow and administrative control.
             </p>
           </div>
           <div className="grid gap-4">
@@ -343,9 +349,9 @@ const HomePage = () => {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-2xl">
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-white/75">Final CTA</p>
-              <h2 className="mt-3 text-3xl font-black md:text-4xl">Ready to show the project with a cleaner, stronger first impression?</h2>
+              <h2 className="mt-3 text-3xl font-black md:text-4xl">Ready to streamline assignment operations with a cleaner, stronger workflow?</h2>
               <p className="mt-4 text-base leading-8 text-white/85">
-                Start with the role-based onboarding flow, then move into dashboards to demonstrate assignment creation, submission, and admin control.
+                Bring registration, assignment publishing, submissions, grading, and administration into one organized platform.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -436,6 +442,9 @@ const HomePage = () => {
         </div>
         <p className="mx-auto mt-6 w-full max-w-6xl text-center text-xs text-slate-500 dark:text-slate-400">
           Copyright ManageX. All rights reserved.
+        </p>
+        <p className="mx-auto mt-2 w-full max-w-6xl text-center text-sm text-slate-600 dark:text-slate-300">
+          Administrative access is available through the dedicated <Link to="/login?role=admin" className="font-semibold text-emerald-700 dark:text-emerald-400">Admin Login</Link>.
         </p>
       </footer>
     </div>

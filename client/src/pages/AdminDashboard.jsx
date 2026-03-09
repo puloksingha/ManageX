@@ -96,6 +96,7 @@ const AdminDashboard = () => {
         department: u.department || "",
         role: u.role || "student",
         batch: u.batch?._id || "",
+        approved: Boolean(u.approved !== false),
         emailVerified: Boolean(u.emailVerified),
         phone: u.phone || "",
         bio: u.bio || "",
@@ -374,8 +375,7 @@ const AdminDashboard = () => {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">Operations center</p>
             <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Manage users, departments, batches, and subjects from one admin view.</h2>
             <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 dark:text-slate-300">
-              This screen is the strongest demonstration of your CRUD flow. Keep the data clean, show the relationships between
-              departments and batches, and use the filters to explain control over the system.
+              Keep academic structure, user access, and configuration records aligned through one central administrative workflow.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -507,6 +507,7 @@ const AdminDashboard = () => {
                 <th className="px-2 py-2">Phone</th>
                 <th className="px-2 py-2">Bio</th>
                 <th className="px-2 py-2">Avatar URL</th>
+                <th className="px-2 py-2">Approved</th>
                 <th className="px-2 py-2">Verified</th>
                 <th className="px-2 py-2">Admin Key</th>
                 <th className="px-2 py-2">Actions</th>
@@ -545,6 +546,7 @@ const AdminDashboard = () => {
                   <td className="px-2 py-2"><input className="w-28 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.phone || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], phone: e.target.value } }))} /></td>
                   <td className="px-2 py-2"><input className="w-40 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.bio || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], bio: e.target.value } }))} /></td>
                   <td className="px-2 py-2"><input className="w-40 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" value={userDrafts[u._id]?.avatarUrl || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], avatarUrl: e.target.value } }))} /></td>
+                  <td className="px-2 py-2"><input type="checkbox" checked={Boolean(userDrafts[u._id]?.approved)} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], approved: e.target.checked } }))} /></td>
                   <td className="px-2 py-2"><input type="checkbox" checked={Boolean(userDrafts[u._id]?.emailVerified)} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], emailVerified: e.target.checked } }))} /></td>
                   <td className="px-2 py-2">
                     <input className="w-28 rounded border border-slate-300 px-2 py-1 dark:border-slate-700 dark:bg-slate-800" type="password" value={userDrafts[u._id]?.adminSecurityKey || ""} onChange={(e) => setUserDrafts((p) => ({ ...p, [u._id]: { ...p[u._id], adminSecurityKey: e.target.value } }))} placeholder="if admin" />
@@ -559,7 +561,7 @@ const AdminDashboard = () => {
               ))}
               {users.length === 0 ? (
                 <tr>
-                  <td className="px-3 py-5 text-center text-slate-500" colSpan={11}>No users found</td>
+                  <td className="px-3 py-5 text-center text-slate-500" colSpan={12}>No users found</td>
                 </tr>
               ) : null}
             </tbody>

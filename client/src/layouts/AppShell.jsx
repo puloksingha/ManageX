@@ -125,8 +125,7 @@ const AppShell = ({ title, children }) => {
                       Welcome back, {user?.name || "User"}.
                     </h2>
                     <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300 md:text-base">
-                      This workspace keeps assignments, submissions, grading, and academic operations organized for presentation
-                      and daily use.
+                      This workspace keeps assignments, submissions, grading, and academic operations organized in one place.
                     </p>
                     <div className="mt-5 flex flex-wrap gap-2">
                       {identityPills.map((item) => (
@@ -143,9 +142,9 @@ const AppShell = ({ title, children }) => {
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                     <article className="rounded-3xl bg-gradient-to-br from-emerald-600 to-cyan-600 p-5 text-white shadow-lg shadow-emerald-500/20">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">Workspace status</p>
-                      <p className="mt-2 text-xl font-black">Ready for demo and daily use</p>
+                      <p className="mt-2 text-xl font-black">Operational and up to date</p>
                       <p className="mt-2 text-sm leading-6 text-white/85">
-                        Keep navigation simple, data visible, and actions easy to explain during presentation.
+                        Access dashboards, profile controls, and daily workflow actions from a single interface.
                       </p>
                     </article>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">

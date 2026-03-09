@@ -133,8 +133,8 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
       <div className="mt-auto space-y-3 pt-6">
         {!collapsed ? (
           <article className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
-            <p className="font-semibold text-slate-900 dark:text-slate-100">Presentation tip</p>
-            <p className="mt-1 leading-6">Open the dashboard first, then walk through profile, assignment flow, and role control.</p>
+            <p className="font-semibold text-slate-900 dark:text-slate-100">Quick access</p>
+            <p className="mt-1 leading-6">Use the dashboard for workflow activity and profile settings for account-level updates.</p>
           </article>
         ) : null}
         <button

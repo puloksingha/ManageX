@@ -217,6 +217,11 @@ const RegisterPage = () => {
         {form.role === "student" && !batchesLoading && form.department && batches.length === 0 ? (
           <p className="text-xs text-rose-600">No batches found for this department. Contact admin.</p>
         ) : null}
+        {form.role === "department" ? (
+          <p className="text-xs text-amber-700 dark:text-amber-300">
+            Teacher accounts require admin approval after email verification before dashboard access is enabled.
+          </p>
+        ) : null}
 
         <PasswordField
           value={form.password}

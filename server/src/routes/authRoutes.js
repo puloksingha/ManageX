@@ -2,6 +2,7 @@ import { Router } from "express";
 import { body } from "express-validator";
 import rateLimit from "express-rate-limit";
 import {
+  approvalStatus,
   forgotPassword,
   login,
   logout,
@@ -62,6 +63,7 @@ router.post(
 );
 
 router.post("/resend-verification", [body("email").isEmail()], validate, resendVerification);
+router.post("/approval-status", [body("email").isEmail()], validate, approvalStatus);
 
 router.post(
   "/login",

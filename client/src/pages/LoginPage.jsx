@@ -14,6 +14,7 @@ const LoginPage = () => {
   const [form, setForm] = useState({ email: "", password: "", adminSecurityKey: "" });
   const [role, setRole] = useState(initialRole);
   const [submitting, setSubmitting] = useState(false);
+  const isAdminMode = role === "admin";
 
   const hint = useMemo(
     () => [
@@ -39,10 +40,17 @@ const LoginPage = () => {
       else navigate("/admin");
     } catch (error) {
       const message = error.response?.data?.message || "Login failed";
-      toast.error(message);
+      if (message.toLowerCase().includes("awaiting admin approval")) {
+        navigate(`/approval-pending?email=${encodeURIComponent(form.email)}`);
+        return;
+      }
+
       if (message.toLowerCase().includes("verify")) {
         navigate(`/verify-email?email=${encodeURIComponent(form.email)}`);
+        return;
       }
+
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -51,18 +59,24 @@ const LoginPage = () => {
   return (
     <AuthShell title="ManageX Login" subtitle="Select your portal and sign in">
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
-        <div>
-          <label className="text-sm font-medium">Portal</label>
-          <select
-            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-          >
-            <option value="student">Student login</option>
-            <option value="department">Department login</option>
-            <option value="admin">Admin login</option>
-          </select>
-        </div>
+        {isAdminMode ? (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-900 dark:bg-amber-950/30">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-800 dark:text-amber-200">Admin Portal</p>
+            <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">Use administrator credentials and security key to continue.</p>
+          </div>
+        ) : (
+          <div>
+            <label className="text-sm font-medium">Portal</label>
+            <select
+              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 outline-none focus:border-emerald-500 dark:border-slate-700 dark:bg-slate-800"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+            >
+              <option value="student">Student login</option>
+              <option value="department">Department login</option>
+            </select>
+          </div>
+        )}
 
         <div>
           <label className="text-sm font-medium">Email</label>
@@ -85,7 +99,7 @@ const LoginPage = () => {
             />
           </div>
         </div>
-        {role === "admin" ? (
+        {isAdminMode ? (
           <div>
             <label className="text-sm font-medium">Admin Security Key</label>
             <input
@@ -108,7 +122,7 @@ const LoginPage = () => {
       </form>
 
       <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
-        {role === "admin" ? (
+        {isAdminMode ? (
           "Admin registration is disabled."
         ) : (
           <>
@@ -121,6 +135,9 @@ const LoginPage = () => {
       </p>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
         Forgot password? <Link className="font-semibold text-emerald-700" to="/forgot-password">Reset it</Link>
+      </p>
+      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+        Need admin access? <Link className="font-semibold text-emerald-700" to="/login?role=admin">Admin login</Link>
       </p>
 
       {/* <ul className="mt-6 space-y-1 text-xs text-slate-500 dark:text-slate-300">

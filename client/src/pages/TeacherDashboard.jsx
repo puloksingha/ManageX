@@ -11,6 +11,7 @@ const toneStyles = {
   cyan: "from-cyan-500 to-cyan-600 shadow-cyan-500/20",
   amber: "from-amber-500 to-amber-600 shadow-amber-500/20",
   slate: "from-slate-700 to-slate-900 shadow-slate-500/20",
+  rose: "from-rose-500 to-rose-600 shadow-rose-500/20",
 };
 
 const statusStyles = {
@@ -21,6 +22,22 @@ const statusStyles = {
   Open: "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
 };
 
+const panelClass =
+  "rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85 md:p-6";
+
+const submissionFilterOptions = [
+  { id: "all", label: "All" },
+  { id: "review", label: "Need review" },
+  { id: "Graded", label: "Graded" },
+  { id: "Late", label: "Late" },
+];
+
+const assignmentFilterOptions = [
+  { id: "all", label: "All" },
+  { id: "Open", label: "Open" },
+  { id: "Closed", label: "Closed" },
+];
+
 const SummaryCard = ({ label, value, description, tone }) => (
   <article className={`rounded-[1.75rem] bg-gradient-to-br ${toneStyles[tone]} p-5 text-white shadow-lg`}>
     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">{label}</p>
@@ -29,6 +46,34 @@ const SummaryCard = ({ label, value, description, tone }) => (
   </article>
 );
 
+const FilterChip = ({ active, children, onClick }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition ${
+      active
+        ? "bg-slate-900 text-white shadow-md dark:bg-slate-100 dark:text-slate-900"
+        : "border border-slate-200 bg-white/80 text-slate-600 hover:border-emerald-200 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300 dark:hover:border-emerald-800 dark:hover:text-white"
+    }`}
+  >
+    {children}
+  </button>
+);
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+};
+
 const toDateTimeLocalInput = (value) => {
   if (!value) return "";
   const date = new Date(value);
@@ -36,6 +81,147 @@ const toDateTimeLocalInput = (value) => {
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
   return date.toISOString().slice(0, 16);
 };
+
+const renderAssignmentActions = (assignment, onEdit, onDelete) => (
+  <div className="flex flex-wrap gap-2">
+    <button
+      type="button"
+      onClick={() => onEdit(assignment)}
+      className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+    >
+      Edit
+    </button>
+    <button
+      type="button"
+      onClick={() => onDelete(assignment._id)}
+      className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500"
+    >
+      Delete
+    </button>
+  </div>
+);
+
+const AssignmentSection = ({
+  title,
+  eyebrow,
+  subtitle,
+  assignments,
+  query,
+  onQueryChange,
+  statusFilter,
+  onStatusFilterChange,
+  emptyMessage,
+  showActions = false,
+  showOwner = false,
+  onEdit,
+  onDelete,
+}) => (
+  <section className={panelClass}>
+    <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+      <div className="min-w-0">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{eyebrow}</p>
+        <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">{title}</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{subtitle}</p>
+      </div>
+      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <input
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Search title, subject, batch"
+          className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-800"
+        />
+        <div className="flex flex-wrap gap-2">
+          {assignmentFilterOptions.map((option) => (
+            <FilterChip key={option.id} active={statusFilter === option.id} onClick={() => onStatusFilterChange(option.id)}>
+              {option.label}
+            </FilterChip>
+          ))}
+        </div>
+      </div>
+    </div>
+
+    <div className="mt-6 grid gap-4 xl:hidden">
+      {assignments.map((assignment) => (
+        <article key={assignment._id} className="rounded-[1.5rem] border border-slate-200 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">{assignment.title}</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{assignment.subject?.name || "-"}</p>
+            </div>
+            <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[assignment.status] || statusStyles.Open}`}>
+              {assignment.status}
+            </span>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Batch</p>
+              <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">{assignment.batch?.name || "-"}</p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Due</p>
+              <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">{formatDateTime(assignment.dueDate)}</p>
+            </div>
+            {showOwner ? (
+              <div className="sm:col-span-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Owner</p>
+                <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">{assignment.createdBy?.name || "-"}</p>
+              </div>
+            ) : null}
+          </div>
+
+          {showActions ? <div className="mt-4">{renderAssignmentActions(assignment, onEdit, onDelete)}</div> : null}
+        </article>
+      ))}
+
+      {assignments.length === 0 ? (
+        <div className="rounded-[1.5rem] border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+          {emptyMessage}
+        </div>
+      ) : null}
+    </div>
+
+    <div className="mt-6 hidden overflow-x-auto xl:block">
+      <table className="w-full min-w-[900px] text-left text-sm">
+        <thead className="border-b border-slate-200 dark:border-slate-800">
+          <tr>
+            <th className="px-3 py-3">Title</th>
+            <th className="px-3 py-3">Subject</th>
+            {showOwner ? <th className="px-3 py-3">Owner</th> : null}
+            <th className="px-3 py-3">Batch</th>
+            <th className="px-3 py-3">Due</th>
+            <th className="px-3 py-3">Status</th>
+            {showActions ? <th className="px-3 py-3">Actions</th> : null}
+          </tr>
+        </thead>
+        <tbody>
+          {assignments.map((assignment) => (
+            <tr key={assignment._id} className="border-b border-slate-100 dark:border-slate-800">
+              <td className="px-3 py-4 font-medium text-slate-800 dark:text-slate-100">{assignment.title}</td>
+              <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{assignment.subject?.name || "-"}</td>
+              {showOwner ? <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{assignment.createdBy?.name || "-"}</td> : null}
+              <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{assignment.batch?.name || "-"}</td>
+              <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{formatDateTime(assignment.dueDate)}</td>
+              <td className="px-3 py-4">
+                <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[assignment.status] || statusStyles.Open}`}>
+                  {assignment.status}
+                </span>
+              </td>
+              {showActions ? <td className="px-3 py-4">{renderAssignmentActions(assignment, onEdit, onDelete)}</td> : null}
+            </tr>
+          ))}
+          {assignments.length === 0 ? (
+            <tr>
+              <td className="px-3 py-8 text-center text-slate-500 dark:text-slate-400" colSpan={showOwner && showActions ? 7 : showOwner || showActions ? 6 : 5}>
+                {emptyMessage}
+              </td>
+            </tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  </section>
+);
 
 const TeacherDashboard = () => {
   const { user } = useAuth();
@@ -47,6 +233,12 @@ const TeacherDashboard = () => {
   const [selected, setSelected] = useState("");
   const [attachment, setAttachment] = useState(null);
   const [editingAssignmentId, setEditingAssignmentId] = useState("");
+  const [submissionFilter, setSubmissionFilter] = useState("all");
+  const [submissionQuery, setSubmissionQuery] = useState("");
+  const [myAssignmentQuery, setMyAssignmentQuery] = useState("");
+  const [departmentAssignmentQuery, setDepartmentAssignmentQuery] = useState("");
+  const [myAssignmentFilter, setMyAssignmentFilter] = useState("all");
+  const [departmentAssignmentFilter, setDepartmentAssignmentFilter] = useState("all");
   const [assignmentForm, setAssignmentForm] = useState({
     title: "",
     description: "",
@@ -64,20 +256,24 @@ const TeacherDashboard = () => {
       api.get("/assignments?mine=true"),
       api.get("/assignments?departmentOnly=true"),
     ]);
-    setSubmissions(subRes.data.submissions || []);
-    setSubjects(subjectRes.data.subjects || []);
-    setBatches(batchRes.data.batches || []);
+    const nextSubmissions = subRes.data.submissions || [];
+    const nextSubjects = subjectRes.data.subjects || [];
+    const nextBatches = batchRes.data.batches || [];
+
+    setSubmissions(nextSubmissions);
+    setSubjects(nextSubjects);
+    setBatches(nextBatches);
     setMyAssignments(myAssignmentRes.data.assignments || []);
     setDepartmentAssignments(departmentAssignmentRes.data.assignments || []);
 
-    if (!selected && subRes.data.submissions?.length) {
-      setSelected(subRes.data.submissions[0]._id);
+    if (!selected && nextSubmissions.length) {
+      setSelected(nextSubmissions[0]._id);
     }
-    if (!assignmentForm.subject && subjectRes.data.subjects?.length) {
-      setAssignmentForm((prev) => ({ ...prev, subject: subjectRes.data.subjects[0]._id }));
+    if (!assignmentForm.subject && nextSubjects.length) {
+      setAssignmentForm((prev) => ({ ...prev, subject: nextSubjects[0]._id }));
     }
-    if (!assignmentForm.batch && batchRes.data.batches?.length) {
-      setAssignmentForm((prev) => ({ ...prev, batch: batchRes.data.batches[0]._id }));
+    if (!assignmentForm.batch && nextBatches.length) {
+      setAssignmentForm((prev) => ({ ...prev, batch: nextBatches[0]._id }));
     }
   };
 
@@ -90,6 +286,18 @@ const TeacherDashboard = () => {
       setDepartmentAssignments([]);
     });
   }, []);
+
+  useEffect(() => {
+    if (!submissions.length) {
+      if (selected) setSelected("");
+      return;
+    }
+
+    const exists = submissions.some((submission) => submission._id === selected);
+    if (!exists) {
+      setSelected(submissions[0]._id);
+    }
+  }, [submissions, selected]);
 
   const onGrade = async ({ marks, feedback }) => {
     if (!selected) return;
@@ -126,6 +334,11 @@ const TeacherDashboard = () => {
       dueDate: toDateTimeLocalInput(assignment.dueDate),
       maxMarks: assignment.maxMarks || 100,
     });
+
+    const editor = document.getElementById("assignment-editor");
+    if (editor) {
+      editor.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
   const createOrUpdateAssignment = async (e) => {
@@ -171,53 +384,152 @@ const TeacherDashboard = () => {
     [submissions, selected]
   );
 
+  const filteredSubmissions = useMemo(() => {
+    const query = submissionQuery.trim().toLowerCase();
+
+    return submissions.filter((submission) => {
+      const statusMatch =
+        submissionFilter === "all"
+          ? true
+          : submissionFilter === "review"
+            ? submission.status !== "Graded"
+            : submission.status === submissionFilter;
+
+      if (!statusMatch) return false;
+      if (!query) return true;
+
+      const haystack = [submission.student?.name, submission.assignment?.title, submission.status]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [submissions, submissionFilter, submissionQuery]);
+
+  const filterAssignments = (assignments, query, statusFilter) => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return assignments.filter((assignment) => {
+      const statusMatch = statusFilter === "all" ? true : assignment.status === statusFilter;
+      if (!statusMatch) return false;
+      if (!normalizedQuery) return true;
+
+      const haystack = [assignment.title, assignment.subject?.name, assignment.batch?.name, assignment.createdBy?.name]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(normalizedQuery);
+    });
+  };
+
+  const filteredMyAssignments = useMemo(
+    () => filterAssignments(myAssignments, myAssignmentQuery, myAssignmentFilter),
+    [myAssignments, myAssignmentQuery, myAssignmentFilter]
+  );
+
+  const filteredDepartmentAssignments = useMemo(
+    () => filterAssignments(departmentAssignments, departmentAssignmentQuery, departmentAssignmentFilter),
+    [departmentAssignments, departmentAssignmentQuery, departmentAssignmentFilter]
+  );
+
   const summary = useMemo(() => {
     const pendingReview = submissions.filter((submission) => submission.status !== "Graded").length;
     const graded = submissions.filter((submission) => submission.status === "Graded").length;
     const activeAssignments = myAssignments.filter((assignment) => assignment.status === "Open").length;
+    const lateSubmissions = submissions.filter((submission) => submission.status === "Late").length;
+
     return {
       submissions: submissions.length,
       pendingReview,
       graded,
       activeAssignments,
       departmentAssignments: departmentAssignments.length,
+      lateSubmissions,
     };
   }, [submissions, myAssignments, departmentAssignments]);
 
+  const nextDeadline = useMemo(() => {
+    const now = Date.now();
+
+    return myAssignments
+      .filter((assignment) => assignment.dueDate && new Date(assignment.dueDate).getTime() >= now)
+      .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))[0];
+  }, [myAssignments]);
+
+  const latestSubmission = useMemo(() => {
+    return [...submissions].sort((a, b) => {
+      const aTime = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      const bTime = new Date(b.updatedAt || b.createdAt || 0).getTime();
+      return bTime - aTime;
+    })[0];
+  }, [submissions]);
+
   return (
     <DashboardLayout title="Department Dashboard">
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-5">
         <SummaryCard label="Submissions" value={summary.submissions} description="Student uploads currently visible to your workspace." tone="slate" />
         <SummaryCard label="Need review" value={summary.pendingReview} description="Submissions still waiting for grading or feedback." tone="amber" />
         <SummaryCard label="Graded" value={summary.graded} description="Completed reviews already returned to students." tone="cyan" />
         <SummaryCard label="My assignments" value={myAssignments.length} description="Assignments created directly by your account." tone="emerald" />
+        <SummaryCard label="Late items" value={summary.lateSubmissions} description="Submissions already marked late in the current queue." tone="rose" />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
         <div className="grid gap-6">
-          <article className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
-            <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Review queue</p>
+          <article className={panelClass}>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">Review queue</p>
                 <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Student submissions</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  Review files, pick a submission, and send marks with feedback from the same workspace.
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Filter the queue, select a submission, and move into grading without leaving the page.
                 </p>
               </div>
-              <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
-                {summary.pendingReview} pending
-              </span>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/90 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Latest activity</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{latestSubmission?.student?.name || "No submissions yet"}</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{latestSubmission?.assignment?.title || "New uploads will appear here."}</p>
+                </div>
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/90 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Next deadline</p>
+                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{nextDeadline?.title || "No open deadline"}</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{nextDeadline ? formatDateTime(nextDeadline.dueDate) : "Create or update an assignment to fill the schedule."}</p>
+                </div>
+              </div>
             </div>
+
+            <div className="mt-6 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+              <input
+                value={submissionQuery}
+                onChange={(e) => setSubmissionQuery(e.target.value)}
+                placeholder="Search by student, assignment, or status"
+                className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-800"
+              />
+              <div className="flex flex-wrap gap-2">
+                {submissionFilterOptions.map((option) => (
+                  <FilterChip key={option.id} active={submissionFilter === option.id} onClick={() => setSubmissionFilter(option.id)}>
+                    {option.label}
+                  </FilterChip>
+                ))}
+              </div>
+            </div>
+
             <div className="mt-6">
-              <SubmissionTable rows={submissions} />
+              <SubmissionTable rows={filteredSubmissions} selectedId={selected} onSelect={setSelected} />
             </div>
           </article>
 
-          <article className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
+          <article id="grading-panel" className={panelClass}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-400">Grading panel</p>
                 <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Grade selected submission</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                  Use the mobile cards or desktop table above to choose the work you want to review.
+                </p>
               </div>
               <select
                 value={selected}
@@ -254,6 +566,14 @@ const TeacherDashboard = () => {
                     <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Current marks</p>
                     <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">{selectedSubmission.marks ?? "-"}</p>
                   </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Student note</p>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{selectedSubmission.note || "No note shared."}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Submitted</p>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{formatDateTime(selectedSubmission.updatedAt || selectedSubmission.createdAt)}</p>
+                  </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {selectedSubmission.fileUrl ? (
@@ -283,208 +603,166 @@ const TeacherDashboard = () => {
           </article>
         </div>
 
-        <article className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">Assignment editor</p>
-          <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">
-            {editingAssignmentId ? "Update assignment" : "Create assignment"}
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-            Publish work for your department, set marks, and attach reference files if needed.
-          </p>
+        <div className="grid gap-6 xl:sticky xl:top-24 xl:self-start">
+          <article className={panelClass}>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Quick actions</p>
+            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Department control panel</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              Jump straight into assignment creation or the grading area from any device size.
+            </p>
 
-          <form onSubmit={createOrUpdateAssignment} className="mt-6 space-y-4">
-            <input
-              className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
-              placeholder="Title"
-              value={assignmentForm.title}
-              onChange={(e) => setAssignmentForm((prev) => ({ ...prev, title: e.target.value }))}
-              required
-            />
-            <textarea
-              className="min-h-28 w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
-              placeholder="Description"
-              value={assignmentForm.description}
-              onChange={(e) => setAssignmentForm((prev) => ({ ...prev, description: e.target.value }))}
-              required
-            />
-            <select
-              className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
-              value={assignmentForm.subject}
-              onChange={(e) => setAssignmentForm((prev) => ({ ...prev, subject: e.target.value }))}
-              required
-            >
-              <option value="">Subject</option>
-              {subjects.map((subject) => (
-                <option key={subject._id} value={subject._id}>
-                  {subject.name}
-                </option>
-              ))}
-            </select>
-            <select
-              className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
-              value={assignmentForm.batch}
-              onChange={(e) => setAssignmentForm((prev) => ({ ...prev, batch: e.target.value }))}
-              required
-            >
-              <option value="">Batch</option>
-              {batches.map((batch) => (
-                <option key={batch._id} value={batch._id}>
-                  {batch.name}
-                </option>
-              ))}
-            </select>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <input
-                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
-                type="datetime-local"
-                value={assignmentForm.dueDate}
-                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, dueDate: e.target.value }))}
-                required
-              />
-              <input
-                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
-                type="number"
-                min="1"
-                value={assignmentForm.maxMarks}
-                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, maxMarks: e.target.value }))}
-                required
-              />
-            </div>
-            <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-950/60">
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Reference attachment</label>
-              <input type="file" accept=".pdf,.docx,.zip" onChange={(e) => setAttachment(e.target.files?.[0] || null)} className="mt-3 w-full text-sm" />
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+              <a
+                href="#assignment-editor"
+                className="rounded-[1.5rem] bg-gradient-to-br from-emerald-600 to-cyan-600 p-4 text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">Create work</p>
+                <p className="mt-2 text-lg font-black">Open assignment editor</p>
+                <p className="mt-2 text-sm text-white/85">Publish a new assignment or update an existing one.</p>
+              </a>
+              <a
+                href="#grading-panel"
+                className="rounded-[1.5rem] border border-slate-200 bg-slate-50/90 p-4 transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-white dark:border-slate-800 dark:bg-slate-950/60 dark:hover:border-cyan-800"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Review flow</p>
+                <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">Jump to grading</p>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{summary.pendingReview} submissions are waiting for feedback.</p>
+              </a>
             </div>
 
-            <div className="flex gap-2">
-              <button className="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500">
-                {editingAssignmentId ? "Update Assignment" : "Create Assignment"}
-              </button>
-              {editingAssignmentId ? (
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="rounded-xl border border-slate-300 px-4 py-3 font-semibold dark:border-slate-700"
-                >
-                  Cancel
-                </button>
-              ) : null}
+            <div className="mt-6 rounded-[1.75rem] border border-dashed border-slate-300 p-4 dark:border-slate-700">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Workspace pulse</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+                <div className="rounded-2xl bg-slate-50/90 p-4 dark:bg-slate-950/60">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Department reach</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{summary.departmentAssignments} assignments are visible across {user?.department || "your"} workspace.</p>
+                </div>
+                <div className="rounded-2xl bg-slate-50/90 p-4 dark:bg-slate-950/60">
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Open work</p>
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{summary.activeAssignments} of your assignments are still open for submissions.</p>
+                </div>
+              </div>
             </div>
-          </form>
-        </article>
-      </section>
+          </article>
 
-      <section className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Owned by you</p>
-            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">My assignments</h2>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{summary.activeAssignments} currently open for students.</p>
-        </div>
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="px-3 py-3">Title</th>
-                <th className="px-3 py-3">Subject</th>
-                <th className="px-3 py-3">Batch</th>
-                <th className="px-3 py-3">Due</th>
-                <th className="px-3 py-3">Status</th>
-                <th className="px-3 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {myAssignments.map((assignment) => (
-                <tr key={assignment._id} className="border-b border-slate-100 dark:border-slate-800">
-                  <td className="px-3 py-4 font-medium text-slate-800 dark:text-slate-100">{assignment.title}</td>
-                  <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{assignment.subject?.name || "-"}</td>
-                  <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{assignment.batch?.name || "-"}</td>
-                  <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{new Date(assignment.dueDate).toLocaleString()}</td>
-                  <td className="px-3 py-4">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[assignment.status] || statusStyles.Open}`}>
-                      {assignment.status}
-                    </span>
-                  </td>
-                  <td className="px-3 py-4">
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(assignment)}
-                        className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removeAssignment(assignment._id)}
-                        className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {myAssignments.length === 0 ? (
-                <tr>
-                  <td className="px-3 py-8 text-center text-slate-500 dark:text-slate-400" colSpan={6}>
-                    No assignments created yet.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section className="rounded-[2rem] border border-white/70 bg-white/85 p-6 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Shared workspace</p>
+          <article id="assignment-editor" className={panelClass}>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">Assignment editor</p>
             <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">
-              Assignments in {user?.department || "your department"}
+              {editingAssignmentId ? "Update assignment" : "Create assignment"}
             </h2>
-          </div>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{summary.departmentAssignments} visible across the department workspace.</p>
-        </div>
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full min-w-[900px] text-left text-sm">
-            <thead className="border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th className="px-3 py-3">Title</th>
-                <th className="px-3 py-3">Subject</th>
-                <th className="px-3 py-3">Owner</th>
-                <th className="px-3 py-3">Batch</th>
-                <th className="px-3 py-3">Due</th>
-                <th className="px-3 py-3">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {departmentAssignments.map((assignment) => (
-                <tr key={assignment._id} className="border-b border-slate-100 dark:border-slate-800">
-                  <td className="px-3 py-4 font-medium text-slate-800 dark:text-slate-100">{assignment.title}</td>
-                  <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{assignment.subject?.name || "-"}</td>
-                  <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{assignment.createdBy?.name || "-"}</td>
-                  <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{assignment.batch?.name || "-"}</td>
-                  <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{new Date(assignment.dueDate).toLocaleString()}</td>
-                  <td className="px-3 py-4">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[assignment.status] || statusStyles.Open}`}>
-                      {assignment.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {departmentAssignments.length === 0 ? (
-                <tr>
-                  <td className="px-3 py-8 text-center text-slate-500 dark:text-slate-400" colSpan={6}>
-                    No assignments found for your department.
-                  </td>
-                </tr>
-              ) : null}
-            </tbody>
-          </table>
+            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              Publish work for your department, set marks, and attach reference files if needed.
+            </p>
+
+            <form onSubmit={createOrUpdateAssignment} className="mt-6 space-y-4">
+              <input
+                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                placeholder="Title"
+                value={assignmentForm.title}
+                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, title: e.target.value }))}
+                required
+              />
+              <textarea
+                className="min-h-28 w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                placeholder="Description"
+                value={assignmentForm.description}
+                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, description: e.target.value }))}
+                required
+              />
+              <select
+                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                value={assignmentForm.subject}
+                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, subject: e.target.value }))}
+                required
+              >
+                <option value="">Subject</option>
+                {subjects.map((subject) => (
+                  <option key={subject._id} value={subject._id}>
+                    {subject.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                value={assignmentForm.batch}
+                onChange={(e) => setAssignmentForm((prev) => ({ ...prev, batch: e.target.value }))}
+                required
+              >
+                <option value="">Batch</option>
+                {batches.map((batch) => (
+                  <option key={batch._id} value={batch._id}>
+                    {batch.name}
+                  </option>
+                ))}
+              </select>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <input
+                  className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                  type="datetime-local"
+                  value={assignmentForm.dueDate}
+                  onChange={(e) => setAssignmentForm((prev) => ({ ...prev, dueDate: e.target.value }))}
+                  required
+                />
+                <input
+                  className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                  type="number"
+                  min="1"
+                  value={assignmentForm.maxMarks}
+                  onChange={(e) => setAssignmentForm((prev) => ({ ...prev, maxMarks: e.target.value }))}
+                  required
+                />
+              </div>
+              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-950/60">
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Reference attachment</label>
+                <input type="file" accept=".pdf,.docx,.zip" onChange={(e) => setAttachment(e.target.files?.[0] || null)} className="mt-3 w-full text-sm" />
+              </div>
+
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <button className="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500">
+                  {editingAssignmentId ? "Update Assignment" : "Create Assignment"}
+                </button>
+                {editingAssignmentId ? (
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="rounded-xl border border-slate-300 px-4 py-3 font-semibold dark:border-slate-700"
+                  >
+                    Cancel
+                  </button>
+                ) : null}
+              </div>
+            </form>
+          </article>
         </div>
       </section>
+
+      <AssignmentSection
+        title="My assignments"
+        eyebrow="Owned by you"
+        subtitle={`${summary.activeAssignments} currently open for students.`}
+        assignments={filteredMyAssignments}
+        query={myAssignmentQuery}
+        onQueryChange={setMyAssignmentQuery}
+        statusFilter={myAssignmentFilter}
+        onStatusFilterChange={setMyAssignmentFilter}
+        emptyMessage="No assignments created yet."
+        showActions
+        onEdit={startEdit}
+        onDelete={removeAssignment}
+      />
+
+      <AssignmentSection
+        title={`Assignments in ${user?.department || "your department"}`}
+        eyebrow="Shared workspace"
+        subtitle={`${summary.departmentAssignments} visible across the department workspace.`}
+        assignments={filteredDepartmentAssignments}
+        query={departmentAssignmentQuery}
+        onQueryChange={setDepartmentAssignmentQuery}
+        statusFilter={departmentAssignmentFilter}
+        onStatusFilterChange={setDepartmentAssignmentFilter}
+        emptyMessage="No assignments found for your department."
+        showOwner
+      />
     </DashboardLayout>
   );
 };

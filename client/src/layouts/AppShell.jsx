@@ -58,17 +58,18 @@ const AppShell = ({ title, children }) => {
     user?.department ? `Department: ${user.department}` : "Campus workspace",
     user?.emailVerified ? "Verified account" : "Verification pending",
   ];
+  const workspaceHome = dashboardHomeByRole[user?.role] || "/app";
 
   return (
     <div className={dark ? "dark" : ""}>
       <div className="min-h-screen bg-slate-100 text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
-        <div className="md:flex">
+        <div className="lg:flex">
           {mobileSidebarOpen ? (
             <button
               type="button"
               aria-label="Close menu overlay"
               onClick={() => setMobileSidebarOpen(false)}
-              className="fixed inset-0 z-30 bg-slate-950/45 backdrop-blur-sm md:hidden"
+              className="fixed inset-0 z-30 bg-slate-950/45 backdrop-blur-sm lg:hidden"
             />
           ) : null}
 
@@ -83,35 +84,44 @@ const AppShell = ({ title, children }) => {
             <div className="pointer-events-none absolute inset-x-0 top-0 h-80 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.16),transparent_58%)] dark:bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_58%)]" />
             <div className="pointer-events-none absolute right-0 top-24 h-48 w-48 rounded-full bg-cyan-300/20 blur-3xl dark:bg-cyan-700/20" />
             <div className="relative mx-auto max-w-7xl px-4 py-4 md:px-6 md:py-6">
-              <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setMobileSidebarOpen(true)}
-                    className="rounded-xl border border-slate-300 bg-white/80 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 md:hidden"
-                  >
-                    Menu
-                  </button>
-                  <AppLogo to="/app" compact className="hidden sm:inline-flex md:hidden" />
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-400">
-                      ManageX Control Layer
-                    </p>
-                    <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-slate-100 md:text-3xl">{title}</h1>
+              <div className="sticky top-0 z-20 -mx-2 mb-6 rounded-[1.75rem] border border-white/60 bg-white/82 px-2 py-2 shadow-lg shadow-slate-200/60 backdrop-blur dark:border-slate-800 dark:bg-slate-900/82 dark:shadow-none sm:mx-0 sm:px-4">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="flex items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setMobileSidebarOpen(true)}
+                      className="mt-1 rounded-xl border border-slate-300 bg-white/85 px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur dark:border-slate-700 dark:bg-slate-950/80 dark:text-slate-100 lg:hidden"
+                    >
+                      Menu
+                    </button>
+                    <AppLogo to={workspaceHome} compact className="hidden sm:inline-flex lg:hidden" />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold uppercase tracking-[0.22em] text-emerald-700 dark:text-emerald-400">
+                        ManageX Control Layer
+                      </p>
+                      <h1 className="text-xl font-black tracking-tight text-slate-900 dark:text-slate-100 sm:text-2xl md:text-3xl">{title}</h1>
+                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        {user?.department || "Campus workspace"} - {todayLabel}
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="hidden rounded-xl border border-white/70 bg-white/70 px-4 py-2 text-right shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/70 sm:block">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Today</p>
-                    <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{todayLabel}</p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      <Link
+                        to={workspaceHome}
+                        className="rounded-xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:border-emerald-800"
+                      >
+                        Dashboard
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setDark((prev) => !prev)}
+                        className="rounded-xl border border-slate-300 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100"
+                      >
+                        {dark ? "Light mode" : "Dark mode"}
+                      </button>
+                    </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setDark((prev) => !prev)}
-                    className="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100"
-                  >
-                    {dark ? "Light mode" : "Dark mode"}
-                  </button>
                 </div>
               </div>
 
@@ -149,7 +159,7 @@ const AppShell = ({ title, children }) => {
                     </article>
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
                       <Link
-                        to={dashboardHomeByRole[user?.role] || "/app"}
+                        to={workspaceHome}
                         className="rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-4 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white hover:shadow-md dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:border-emerald-800"
                       >
                         Open dashboard

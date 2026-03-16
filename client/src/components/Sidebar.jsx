@@ -48,11 +48,11 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col border-r border-white/70 bg-white/90 p-4 shadow-2xl shadow-slate-200/70 backdrop-blur transition-transform duration-200 dark:border-slate-800 dark:bg-slate-900/92 dark:shadow-none md:static md:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-40 flex w-[88vw] max-w-72 -translate-x-full flex-col border-r border-white/70 bg-white/90 p-4 shadow-2xl shadow-slate-200/70 backdrop-blur transition-transform duration-200 dark:border-slate-800 dark:bg-slate-900/92 dark:shadow-none lg:static lg:w-72 lg:translate-x-0 ${
         mobileOpen ? "translate-x-0" : ""
-      } ${collapsed ? "md:w-24" : "md:w-72"}`}
+      } ${collapsed ? "lg:w-24" : "lg:w-72"}`}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-start justify-between gap-2">
         <AppLogo to="/app" compact={collapsed} />
         <div className="flex items-center gap-2">
           <button
@@ -60,7 +60,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
             onClick={onToggleCollapse}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 md:inline-flex"
+            className="hidden rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 lg:inline-flex"
           >
             {collapsed ? (
               <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
@@ -75,7 +75,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
           <button
             type="button"
             onClick={onCloseMobile}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 md:hidden"
+            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 lg:hidden"
           >
             Close
           </button>
@@ -84,14 +84,14 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
 
       <section
         className={`mt-6 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-4 text-white dark:border-slate-800 ${
-          collapsed ? "md:px-2 md:py-4" : ""
+          collapsed ? "lg:px-2 lg:py-4" : ""
         }`}
       >
-        <div className={`flex items-center gap-3 ${collapsed ? "md:flex-col" : ""}`}>
+        <div className={`flex items-center gap-3 ${collapsed ? "lg:flex-col" : ""}`}>
           <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12 text-sm font-black tracking-[0.2em]">
             {initials}
           </div>
-          <div className={`${collapsed ? "md:text-center" : ""}`}>
+          <div className={`${collapsed ? "lg:text-center" : ""}`}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-200/80">{roleLabel} Portal</p>
             {!collapsed ? <p className="mt-1 text-sm font-semibold">{user?.name || "ManageX User"}</p> : null}
             {!collapsed ? <p className="text-xs text-white/65">{user?.email || "No email"}</p> : null}
@@ -108,7 +108,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
             title={collapsed ? link.label : undefined}
             className={({ isActive }) =>
               `group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
-                collapsed ? "md:justify-center md:px-2" : ""
+                collapsed ? "lg:justify-center lg:px-2" : ""
               } ${
                 isActive
                   ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/20"
@@ -117,13 +117,9 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
             }
           >
             <span
-              className={`inline-flex h-9 w-9 items-center justify-center rounded-xl border text-xs font-bold ${
-                collapsed ? "" : ""
-              } ${
-                "border-current/15 bg-current/10"
-              }`}
+              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-current/15 bg-current/10 text-xs font-bold"
             >
-              {collapsed ? link.short : link.short}
+              {link.short}
             </span>
             {!collapsed ? <span>{link.label}</span> : null}
           </NavLink>
@@ -142,7 +138,7 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
           onClick={handleLogout}
           title={collapsed ? "Logout" : undefined}
           className={`w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900 ${
-            collapsed ? "md:px-2" : ""
+            collapsed ? "lg:px-2" : ""
           }`}
         >
           {collapsed ? "OUT" : "Logout"}

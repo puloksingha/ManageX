@@ -43,7 +43,7 @@ const GradeForm = ({ onSubmit }) => {
         />
       </div>
       <button
-        className="rounded-xl bg-brand-500 px-4 py-3 font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+        className="rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
         disabled={saving}
       >
         {saving ? "Saving..." : "Save Grade"}

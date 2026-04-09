@@ -2,37 +2,59 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import AppLogo from "./AppLogo";
 
+const DashboardIcon = ({ className = "" }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path d="M4 5.5h7v5H4v-5zm9 0h7v8h-7v-8zM4 12.5h7V20H4v-7.5zm9 3.5h7V20h-7v-4z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const ProfileIcon = ({ className = "" }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path d="M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const LogoutIcon = ({ className = "" }) => (
+  <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <path d="M15 16l4-4-4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M9 12h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M11 5H7a2 2 0 00-2 2v10a2 2 0 002 2h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const linksByRole = {
   student: [
-    { to: "/student", label: "Dashboard", short: "DB" },
-    { to: "/profile", label: "Profile", short: "PR" },
+    { to: "/student", label: "Dashboard", icon: DashboardIcon },
+    { to: "/profile", label: "Profile", icon: ProfileIcon }
   ],
   department: [
-    { to: "/department", label: "Dashboard", short: "DB" },
-    { to: "/profile", label: "Profile", short: "PR" },
+    { to: "/department", label: "Dashboard", icon: DashboardIcon },
+    { to: "/profile", label: "Profile", icon: ProfileIcon }
   ],
   teacher: [
-    { to: "/department", label: "Dashboard", short: "DB" },
-    { to: "/profile", label: "Profile", short: "PR" },
+    { to: "/department", label: "Dashboard", icon: DashboardIcon },
+    { to: "/profile", label: "Profile", icon: ProfileIcon }
   ],
   admin: [
-    { to: "/admin", label: "Dashboard", short: "DB" },
-    { to: "/profile", label: "Profile", short: "PR" },
-  ],
+    { to: "/admin", label: "Dashboard", icon: DashboardIcon },
+    { to: "/profile", label: "Profile", icon: ProfileIcon }
+  ]
 };
 
 const roleLabelMap = {
   student: "Student",
   department: "Department",
   teacher: "Department",
-  admin: "Admin",
+  admin: "Admin"
 };
 
-const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggleCollapse }) => {
+const Sidebar = ({ isCollapsed = false, mobileOpen = false, onCloseMobile, onToggleCollapse }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const links = linksByRole[user?.role] || [];
   const roleLabel = roleLabelMap[user?.role] || "Member";
+  const showLabels = !isCollapsed || mobileOpen;
+  const sidebarWidth = mobileOpen ? 220 : isCollapsed ? 60 : 220;
   const initials = (user?.name || "M")
     .split(" ")
     .map((part) => part[0])
@@ -48,100 +70,99 @@ const Sidebar = ({ collapsed = false, mobileOpen = false, onCloseMobile, onToggl
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-40 flex w-[88vw] max-w-72 -translate-x-full flex-col border-r border-white/70 bg-white/90 p-4 shadow-2xl shadow-slate-200/70 backdrop-blur transition-transform duration-200 dark:border-slate-800 dark:bg-slate-900/92 dark:shadow-none lg:static lg:w-72 lg:translate-x-0 ${
-        mobileOpen ? "translate-x-0" : ""
-      } ${collapsed ? "lg:w-24" : "lg:w-72"}`}
+      style={{ width: `${sidebarWidth}px`, transition: "width 0.25s ease" }}
+      className={`fixed inset-y-0 left-0 z-40 flex shrink-0 flex-col overflow-x-hidden border-r border-emerald-900/30 bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950 px-3 py-4 text-white shadow-2xl transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
+        mobileOpen ? "translate-x-0" : "-translate-x-full"
+      }`}
     >
-      <div className="flex items-start justify-between gap-2">
-        <AppLogo to="/app" compact={collapsed} />
+      <div className="flex items-center justify-between gap-2">
+        <AppLogo to="/app" compact={isCollapsed && !mobileOpen} className="min-w-0 text-white" light />
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onToggleCollapse}
-            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 lg:inline-flex"
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-white transition hover:bg-[rgba(255,255,255,0.07)] md:inline-flex"
           >
-            {collapsed ? (
-              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
-                <path d="M8 5l5 5-5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
-                <path d="M12 5l-5 5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            )}
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              className={`h-4 w-4 transition-transform duration-200 ${isCollapsed ? "rotate-180" : ""}`}
+              aria-hidden="true"
+            >
+              <path d="M12 5l-5 5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </button>
           <button
             type="button"
             onClick={onCloseMobile}
-            className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 lg:hidden"
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/10 px-3 text-[13px] font-semibold text-white transition hover:bg-[rgba(255,255,255,0.07)] md:hidden"
           >
             Close
           </button>
         </div>
       </div>
 
-      <section
-        className={`mt-6 overflow-hidden rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 p-4 text-white dark:border-slate-800 ${
-          collapsed ? "lg:px-2 lg:py-4" : ""
-        }`}
-      >
-        <div className={`flex items-center gap-3 ${collapsed ? "lg:flex-col" : ""}`}>
-          <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/12 text-sm font-black tracking-[0.2em]">
+      <section className={`mt-6 rounded-lg border border-white/10 bg-white/10 p-3 shadow-[0_2px_8px_rgba(0,0,0,0.18)] ${showLabels ? "" : "px-2"}`}>
+        <div className={`flex items-center gap-3 ${showLabels ? "" : "justify-center"}`}>
+          <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/15 text-sm font-black tracking-[0.2em]">
             {initials}
           </div>
-          <div className={`${collapsed ? "lg:text-center" : ""}`}>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-200/80">{roleLabel} Portal</p>
-            {!collapsed ? <p className="mt-1 text-sm font-semibold">{user?.name || "ManageX User"}</p> : null}
-            {!collapsed ? <p className="text-xs text-white/65">{user?.email || "No email"}</p> : null}
-          </div>
+          {showLabels ? (
+            <div className="min-w-0">
+              <p className="truncate text-[14px] font-bold uppercase tracking-[0.18em] text-emerald-200">{roleLabel}</p>
+              <p className="mt-1 truncate text-[13px] font-semibold text-white">{user?.name || "ManageX User"}</p>
+              <p className="truncate text-[13px] text-white/65">{user?.email || "No email"}</p>
+            </div>
+          ) : null}
         </div>
       </section>
 
       <nav className="mt-6 space-y-2">
-        {links.map((link) => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            onClick={onCloseMobile}
-            title={collapsed ? link.label : undefined}
-            className={({ isActive }) =>
-              `group flex items-center gap-3 rounded-2xl px-3 py-3 text-sm font-semibold transition ${
-                collapsed ? "lg:justify-center lg:px-2" : ""
-              } ${
-                isActive
-                  ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-lg shadow-emerald-500/20"
-                  : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:text-white"
-              }`
-            }
-          >
-            <span
-              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-current/15 bg-current/10 text-xs font-bold"
+        {links.map((link) => {
+          const Icon = link.icon;
+
+          return (
+            <NavLink
+              key={link.to}
+              to={link.to}
+              onClick={onCloseMobile}
+              title={!showLabels ? link.label : undefined}
+              className={({ isActive }) =>
+                `group flex items-center rounded-lg px-3 py-3 text-[13px] font-semibold transition ${
+                  showLabels ? "gap-3 justify-start" : "justify-center"
+                } ${
+                  isActive
+                    ? "bg-gradient-to-r from-emerald-500 to-cyan-500 text-white shadow-[0_2px_8px_rgba(0,0,0,0.18)]"
+                    : "text-white/80 hover:bg-[rgba(255,255,255,0.07)] hover:text-white"
+                }`
+              }
             >
-              {link.short}
-            </span>
-            {!collapsed ? <span>{link.label}</span> : null}
-          </NavLink>
-        ))}
+              <Icon className="h-5 w-5 shrink-0" />
+              {showLabels ? <span>{link.label}</span> : null}
+            </NavLink>
+          );
+        })}
       </nav>
 
       <div className="mt-auto space-y-3 pt-6">
-        {!collapsed ? (
-          <article className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950/70 dark:text-slate-300">
-            <p className="font-semibold text-slate-900 dark:text-slate-100">Quick access</p>
-            <p className="mt-1 leading-6">Use the dashboard for workflow activity and profile settings for account-level updates.</p>
+        {showLabels ? (
+          <article className="rounded-lg border border-white/10 bg-white/10 p-4 text-[13px] text-white/75 shadow-[0_2px_8px_rgba(0,0,0,0.18)]">
+            <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-emerald-200">Quick access</p>
+            <p className="mt-2 leading-6">Use the dashboard for workflow activity and profile settings for account-level updates.</p>
           </article>
         ) : null}
         <button
           type="button"
           onClick={handleLogout}
-          title={collapsed ? "Logout" : undefined}
-          className={`w-full rounded-2xl border border-slate-300 bg-white px-3 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900 ${
-            collapsed ? "lg:px-2" : ""
+          title={!showLabels ? "Logout" : undefined}
+          className={`flex w-full items-center rounded-lg border border-white/10 bg-white/10 px-3 py-3 text-[13px] font-semibold text-white transition hover:bg-[rgba(255,255,255,0.07)] ${
+            showLabels ? "gap-3 justify-start" : "justify-center"
           }`}
         >
-          {collapsed ? "OUT" : "Logout"}
+          <LogoutIcon className="h-5 w-5 shrink-0" />
+          {showLabels ? <span>Logout</span> : null}
         </button>
       </div>
     </aside>

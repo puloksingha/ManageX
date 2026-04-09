@@ -11,7 +11,7 @@ const toneStyles = {
   emerald: "from-emerald-500 to-emerald-600 shadow-emerald-500/20",
   cyan: "from-cyan-500 to-cyan-600 shadow-cyan-500/20",
   amber: "from-amber-500 to-amber-600 shadow-amber-500/20",
-  slate: "from-slate-700 to-slate-900 shadow-slate-500/20",
+  slate: "from-sky-600 to-slate-800 shadow-slate-500/20",
   rose: "from-rose-500 to-rose-600 shadow-rose-500/20",
 };
 
@@ -24,7 +24,14 @@ const statusStyles = {
 };
 
 const panelClass =
-  "rounded-[2rem] border border-white/70 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85 md:p-6";
+  "relative rounded-lg border border-white/70 bg-white/90 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/90";
+
+const insetCardClass =
+  "relative rounded-lg border border-slate-200 bg-slate-50/90 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-slate-800 dark:bg-slate-950/60";
+
+const eyebrowClass = "text-[14px] font-bold uppercase tracking-[0.18em]";
+const bodyTextClass = "text-[13px] leading-6";
+const fieldClass = "w-full rounded-lg border border-slate-300 px-3 py-3 text-[13px] dark:border-slate-700 dark:bg-slate-800";
 
 const submissionFilterOptions = [
   { id: "all", label: "All" },
@@ -36,14 +43,14 @@ const submissionFilterOptions = [
 const assignmentFilterOptions = [
   { id: "all", label: "All" },
   { id: "Open", label: "Open" },
-  { id: "Closed", label: "Closed" },
+  { id: "Overdue", label: "Overdue" },
 ];
 
 const SummaryCard = ({ label, value, description, tone }) => (
-  <article className={`rounded-[1.75rem] bg-gradient-to-br ${toneStyles[tone]} p-5 text-white shadow-lg`}>
-    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/70">{label}</p>
+  <article className={`relative rounded-lg bg-gradient-to-br ${toneStyles[tone]} p-5 text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]`}>
+    <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-white/72">{label}</p>
     <p className="mt-3 text-3xl font-black tracking-tight">{value}</p>
-    <p className="mt-3 text-sm leading-6 text-white/80">{description}</p>
+    <p className="mt-3 text-[13px] leading-6 text-white/82">{description}</p>
   </article>
 );
 
@@ -51,7 +58,7 @@ const FilterChip = ({ active, children, onClick }) => (
   <button
     type="button"
     onClick={onClick}
-    className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition ${
+    className={`rounded-full px-4 py-2 text-[13px] font-semibold uppercase tracking-[0.16em] transition ${
       active
         ? "bg-slate-900 text-white shadow-md dark:bg-slate-100 dark:text-slate-900"
         : "border border-slate-200 bg-white/80 text-slate-600 hover:border-emerald-200 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300 dark:hover:border-emerald-800 dark:hover:text-white"
@@ -88,14 +95,14 @@ const renderAssignmentActions = (assignment, onEdit, onDelete) => (
     <button
       type="button"
       onClick={() => onEdit(assignment)}
-      className="rounded-xl border border-slate-300 px-3 py-2 text-xs font-semibold transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+      className="rounded-lg border border-slate-300 px-3 py-2 text-[13px] font-semibold transition hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
     >
       Edit
     </button>
     <button
       type="button"
       onClick={() => onDelete(assignment._id)}
-      className="rounded-xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500"
+      className="rounded-lg bg-rose-600 px-3 py-2 text-[13px] font-semibold text-white transition hover:bg-rose-500"
     >
       Delete
     </button>
@@ -120,16 +127,16 @@ const AssignmentSection = ({
   <section className={panelClass}>
     <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div className="min-w-0">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">{eyebrow}</p>
+        <p className={`${eyebrowClass} text-emerald-700 dark:text-emerald-400`}>{eyebrow}</p>
         <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">{title}</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">{subtitle}</p>
+        <p className={`mt-2 text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>{subtitle}</p>
       </div>
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
         <input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="Search title, subject, batch"
-          className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-800"
+          className={fieldClass}
         />
         <div className="flex flex-wrap gap-2">
           {assignmentFilterOptions.map((option) => (
@@ -143,11 +150,11 @@ const AssignmentSection = ({
 
     <div className="mt-6 grid gap-4 xl:hidden">
       {assignments.map((assignment) => (
-        <article key={assignment._id} className="rounded-[1.5rem] border border-slate-200 bg-white/90 p-4 dark:border-slate-800 dark:bg-slate-950/60">
+        <article key={assignment._id} className={insetCardClass}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-100">{assignment.title}</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{assignment.subject?.name || "-"}</p>
+              <p className="mt-1 text-[13px] text-slate-500 dark:text-slate-400">{assignment.subject?.name || "-"}</p>
             </div>
             <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statusStyles[assignment.status] || statusStyles.Open}`}>
               {assignment.status}
@@ -156,17 +163,17 @@ const AssignmentSection = ({
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Batch</p>
-              <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">{assignment.batch?.name || "-"}</p>
+              <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Batch</p>
+              <p className="mt-1 text-[13px] font-medium text-slate-800 dark:text-slate-100">{assignment.batch?.name || "-"}</p>
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Due</p>
-              <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">{formatDateTime(assignment.dueDate)}</p>
+              <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Due</p>
+              <p className="mt-1 text-[13px] font-medium text-slate-800 dark:text-slate-100">{formatDateTime(assignment.dueDate)}</p>
             </div>
             {showOwner ? (
               <div className="sm:col-span-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Owner</p>
-                <p className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">{assignment.createdBy?.name || "-"}</p>
+                <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Owner</p>
+                <p className="mt-1 text-[13px] font-medium text-slate-800 dark:text-slate-100">{assignment.createdBy?.name || "-"}</p>
               </div>
             ) : null}
           </div>
@@ -176,14 +183,14 @@ const AssignmentSection = ({
       ))}
 
       {assignments.length === 0 ? (
-        <div className="rounded-[1.5rem] border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
+        <div className="rounded-lg border border-dashed border-slate-300 px-4 py-10 text-center text-[13px] text-slate-500 dark:border-slate-700 dark:text-slate-400">
           {emptyMessage}
         </div>
       ) : null}
     </div>
 
     <div className="mt-6 hidden overflow-x-auto xl:block">
-      <table className="w-full min-w-[900px] text-left text-sm">
+      <table className="w-full min-w-[900px] text-left text-[13px]">
         <thead className="border-b border-slate-200 dark:border-slate-800">
           <tr>
             <th className="px-3 py-3">Title</th>
@@ -469,7 +476,7 @@ const TeacherDashboard = () => {
 
   return (
     <DashboardLayout title="Department Dashboard">
-      <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-5">
+      <section className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
         <SummaryCard label="Submissions" value={summary.submissions} description="Student uploads currently visible to your workspace." tone="slate" />
         <SummaryCard label="Need review" value={summary.pendingReview} description="Submissions still waiting for grading or feedback." tone="amber" />
         <SummaryCard label="Graded" value={summary.graded} description="Completed reviews already returned to students." tone="cyan" />
@@ -477,27 +484,27 @@ const TeacherDashboard = () => {
         <SummaryCard label="Late items" value={summary.lateSubmissions} description="Submissions already marked late in the current queue." tone="rose" />
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
-        <div className="grid gap-6">
-          <article className={panelClass}>
+      <section className="grid gap-6 md:grid-cols-2">
+        <div className="contents">
+          <article className={`${panelClass} md:col-start-1 md:row-start-1`}>
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">Review queue</p>
+                <p className={`${eyebrowClass} text-emerald-700 dark:text-emerald-400`}>Review queue</p>
                 <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Student submissions</h2>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
+                <p className={`mt-2 max-w-2xl text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>
                   Filter the queue, select a submission, and move into grading without leaving the page.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/90 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Latest activity</p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{latestSubmission?.student?.name || "No submissions yet"}</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{latestSubmission?.assignment?.title || "New uploads will appear here."}</p>
+                <div className={insetCardClass}>
+                  <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Latest activity</p>
+                  <p className="mt-2 text-[13px] font-semibold text-slate-900 dark:text-slate-100">{latestSubmission?.student?.name || "No submissions yet"}</p>
+                  <p className="mt-1 text-[13px] text-slate-500 dark:text-slate-400">{latestSubmission?.assignment?.title || "New uploads will appear here."}</p>
                 </div>
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/90 p-4 dark:border-slate-800 dark:bg-slate-950/60">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Next deadline</p>
-                  <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">{nextDeadline?.title || "No open deadline"}</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{nextDeadline ? formatDateTime(nextDeadline.dueDate) : "Create or update an assignment to fill the schedule."}</p>
+                <div className={insetCardClass}>
+                  <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Next deadline</p>
+                  <p className="mt-2 text-[13px] font-semibold text-slate-900 dark:text-slate-100">{nextDeadline?.title || "No open deadline"}</p>
+                  <p className="mt-1 text-[13px] text-slate-500 dark:text-slate-400">{nextDeadline ? formatDateTime(nextDeadline.dueDate) : "Create or update an assignment to fill the schedule."}</p>
                 </div>
               </div>
             </div>
@@ -507,7 +514,7 @@ const TeacherDashboard = () => {
                 value={submissionQuery}
                 onChange={(e) => setSubmissionQuery(e.target.value)}
                 placeholder="Search by student, assignment, or status"
-                className="w-full rounded-xl border border-slate-300 px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-800"
+                className={fieldClass}
               />
               <div className="flex flex-wrap gap-2">
                 {submissionFilterOptions.map((option) => (
@@ -523,19 +530,19 @@ const TeacherDashboard = () => {
             </div>
           </article>
 
-          <article id="grading-panel" className={panelClass}>
+          <article id="grading-panel" className={`${panelClass} md:col-start-1 md:row-start-2`}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-700 dark:text-cyan-400">Grading panel</p>
+                <p className={`${eyebrowClass} text-cyan-700 dark:text-cyan-400`}>Grading panel</p>
                 <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Grade selected submission</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                <p className={`mt-2 text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>
                   Use the mobile cards or desktop table above to choose the work you want to review.
                 </p>
               </div>
               <select
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800 lg:max-w-sm"
+                className={`${fieldClass} lg:max-w-sm`}
               >
                 <option value="">Select a submission</option>
                 {submissions.map((row) => (
@@ -547,7 +554,7 @@ const TeacherDashboard = () => {
             </div>
 
             {selectedSubmission ? (
-              <div className="mt-6 rounded-[1.75rem] bg-slate-50/90 p-5 dark:bg-slate-950/70">
+              <div className={`mt-6 ${insetCardClass}`}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.15em] text-white dark:bg-slate-100 dark:text-slate-900">
                     {selectedSubmission.student?.name || "Student"}
@@ -558,22 +565,22 @@ const TeacherDashboard = () => {
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Assignment</p>
-                    <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Assignment</p>
+                    <p className="mt-2 text-[13px] font-semibold text-slate-800 dark:text-slate-100">
                       {selectedSubmission.assignment?.title || "-"}
                     </p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Current marks</p>
-                    <p className="mt-2 text-sm font-semibold text-slate-800 dark:text-slate-100">{selectedSubmission.marks ?? "-"}</p>
+                    <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Current marks</p>
+                    <p className="mt-2 text-[13px] font-semibold text-slate-800 dark:text-slate-100">{selectedSubmission.marks ?? "-"}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Student note</p>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{selectedSubmission.notes || "No note shared."}</p>
+                    <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Student note</p>
+                    <p className="mt-2 text-[13px] text-slate-600 dark:text-slate-300">{selectedSubmission.notes || "No note shared."}</p>
                   </div>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Submitted</p>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{formatDateTime(selectedSubmission.updatedAt || selectedSubmission.createdAt)}</p>
+                    <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Submitted</p>
+                    <p className="mt-2 text-[13px] text-slate-600 dark:text-slate-300">{formatDateTime(selectedSubmission.updatedAt || selectedSubmission.createdAt)}</p>
                   </div>
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
@@ -583,7 +590,7 @@ const TeacherDashboard = () => {
                         href={resolveAssetUrl(selectedSubmission.fileUrl)}
                         target="_blank"
                         rel="noreferrer"
-                        className="rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
+                        className="rounded-lg bg-emerald-50 px-4 py-2 text-[13px] font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
                       >
                         {getAssetActionLabel({
                           type: selectedSubmission.fileType,
@@ -591,18 +598,18 @@ const TeacherDashboard = () => {
                           defaultLabel: "Open student file"
                         })}
                       </a>
-                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                      <p className="truncate text-[13px] text-slate-500 dark:text-slate-400">
                         {getAssetDisplayName({ name: selectedSubmission.fileName, url: selectedSubmission.fileUrl })}
                       </p>
                     </div>
                   ) : null}
-                  <span className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-300">
+                  <span className="rounded-lg border border-slate-200 px-4 py-2 text-[13px] text-slate-500 dark:border-slate-700 dark:text-slate-300">
                     Max marks: {selectedSubmission.assignment?.maxMarks ?? "-"}
                   </span>
                 </div>
               </div>
             ) : (
-              <div className="mt-6 rounded-[1.75rem] bg-slate-50/90 p-5 text-sm text-slate-500 dark:bg-slate-950/70 dark:text-slate-400">
+              <div className={`mt-6 ${insetCardClass} text-[13px] text-slate-500 dark:text-slate-400`}>
                 Select a submission to see details and grade it.
               </div>
             )}
@@ -613,74 +620,71 @@ const TeacherDashboard = () => {
           </article>
         </div>
 
-        <div className="grid gap-6 xl:sticky xl:top-24 xl:self-start">
-          <article className={panelClass}>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">Quick actions</p>
+        <div className="contents">
+          <article className={`${panelClass} md:col-start-2 md:row-start-1`}>
+            <p className={`${eyebrowClass} text-cyan-700 dark:text-cyan-400`}>Quick actions</p>
             <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Department control panel</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            <p className={`mt-2 text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>
               Jump straight into assignment creation or the grading area from any device size.
             </p>
 
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
               <a
                 href="#assignment-editor"
-                className="rounded-[1.5rem] bg-gradient-to-br from-emerald-600 to-cyan-600 p-4 text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5"
+                className="relative rounded-lg bg-gradient-to-br from-emerald-600 to-cyan-600 p-4 text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] transition hover:-translate-y-0.5"
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/75">Create work</p>
+                <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-white/75">Create work</p>
                 <p className="mt-2 text-lg font-black">Open assignment editor</p>
-                <p className="mt-2 text-sm text-white/85">Publish a new assignment or update an existing one.</p>
+                <p className="mt-2 text-[13px] text-white/85">Publish a new assignment or update an existing one.</p>
               </a>
               <a
                 href="#grading-panel"
-                className="rounded-[1.5rem] border border-slate-200 bg-slate-50/90 p-4 transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-white dark:border-slate-800 dark:bg-slate-950/60 dark:hover:border-cyan-800"
+                className={`${insetCardClass} transition hover:-translate-y-0.5 hover:border-cyan-200 hover:bg-white dark:hover:border-cyan-800`}
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Review flow</p>
+                <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Review flow</p>
                 <p className="mt-2 text-lg font-black text-slate-900 dark:text-slate-100">Jump to grading</p>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{summary.pendingReview} submissions are waiting for feedback.</p>
+                <p className="mt-2 text-[13px] text-slate-600 dark:text-slate-300">{summary.pendingReview} submissions are waiting for feedback.</p>
               </a>
             </div>
 
-            <div className="mt-6 rounded-[1.75rem] border border-dashed border-slate-300 p-4 dark:border-slate-700">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Workspace pulse</p>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-                <div className="rounded-2xl bg-slate-50/90 p-4 dark:bg-slate-950/60">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Department reach</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{summary.departmentAssignments} assignments are visible across {user?.department || "your"} workspace.</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className={insetCardClass}>
+                  <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Department reach</p>
+                  <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">{summary.departmentAssignments} assignments are visible across {user?.department || "your"} workspace.</p>
                 </div>
-                <div className="rounded-2xl bg-slate-50/90 p-4 dark:bg-slate-950/60">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Open work</p>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{summary.activeAssignments} of your assignments are still open for submissions.</p>
+                <div className={insetCardClass}>
+                  <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Open work</p>
+                  <p className="mt-2 text-[13px] text-slate-500 dark:text-slate-400">{summary.activeAssignments} of your assignments are still open for submissions.</p>
                 </div>
               </div>
-            </div>
           </article>
 
-          <article id="assignment-editor" className={panelClass}>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700 dark:text-emerald-400">Assignment editor</p>
+          <article id="assignment-editor" className={`${panelClass} md:col-start-2 md:row-start-2`}>
+            <p className={`${eyebrowClass} text-emerald-700 dark:text-emerald-400`}>Assignment editor</p>
             <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">
               {editingAssignmentId ? "Update assignment" : "Create assignment"}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
+            <p className={`mt-2 text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>
               Publish work for your department, set marks, and attach reference files if needed.
             </p>
 
             <form onSubmit={createOrUpdateAssignment} className="mt-6 space-y-4">
               <input
-                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                className={fieldClass}
                 placeholder="Title"
                 value={assignmentForm.title}
                 onChange={(e) => setAssignmentForm((prev) => ({ ...prev, title: e.target.value }))}
                 required
               />
               <textarea
-                className="min-h-28 w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                className={`${fieldClass} min-h-28`}
                 placeholder="Description"
                 value={assignmentForm.description}
                 onChange={(e) => setAssignmentForm((prev) => ({ ...prev, description: e.target.value }))}
                 required
               />
               <select
-                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                className={fieldClass}
                 value={assignmentForm.subject}
                 onChange={(e) => setAssignmentForm((prev) => ({ ...prev, subject: e.target.value }))}
                 required
@@ -693,7 +697,7 @@ const TeacherDashboard = () => {
                 ))}
               </select>
               <select
-                className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                className={fieldClass}
                 value={assignmentForm.batch}
                 onChange={(e) => setAssignmentForm((prev) => ({ ...prev, batch: e.target.value }))}
                 required
@@ -707,14 +711,14 @@ const TeacherDashboard = () => {
               </select>
               <div className="grid gap-4 sm:grid-cols-2">
                 <input
-                  className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                  className={fieldClass}
                   type="datetime-local"
                   value={assignmentForm.dueDate}
                   onChange={(e) => setAssignmentForm((prev) => ({ ...prev, dueDate: e.target.value }))}
                   required
                 />
                 <input
-                  className="w-full rounded-xl border border-slate-300 px-3 py-3 dark:border-slate-700 dark:bg-slate-800"
+                  className={fieldClass}
                   type="number"
                   min="1"
                   value={assignmentForm.maxMarks}
@@ -722,20 +726,20 @@ const TeacherDashboard = () => {
                   required
                 />
               </div>
-              <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-950/60">
-                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Reference attachment</label>
-                <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.zip" onChange={(e) => setAttachment(e.target.files?.[0] || null)} className="mt-3 w-full text-sm" />
+              <div className={`${insetCardClass} border-dashed`}>
+                <label className="block text-[14px] font-bold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200">Reference attachment</label>
+                <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.zip" onChange={(e) => setAttachment(e.target.files?.[0] || null)} className="mt-3 w-full text-[13px]" />
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
-                <button className="w-full rounded-xl bg-emerald-600 py-3 font-semibold text-white transition hover:bg-emerald-500">
+                <button className="w-full rounded-lg bg-emerald-600 py-3 text-[13px] font-semibold text-white transition hover:bg-emerald-500">
                   {editingAssignmentId ? "Update Assignment" : "Create Assignment"}
                 </button>
                 {editingAssignmentId ? (
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="rounded-xl border border-slate-300 px-4 py-3 font-semibold dark:border-slate-700"
+                    className="rounded-lg border border-slate-300 px-4 py-3 text-[13px] font-semibold dark:border-slate-700"
                   >
                     Cancel
                   </button>
@@ -746,33 +750,35 @@ const TeacherDashboard = () => {
         </div>
       </section>
 
-      <AssignmentSection
-        title="My assignments"
-        eyebrow="Owned by you"
-        subtitle={`${summary.activeAssignments} currently open for students.`}
-        assignments={filteredMyAssignments}
-        query={myAssignmentQuery}
-        onQueryChange={setMyAssignmentQuery}
-        statusFilter={myAssignmentFilter}
-        onStatusFilterChange={setMyAssignmentFilter}
-        emptyMessage="No assignments created yet."
-        showActions
-        onEdit={startEdit}
-        onDelete={removeAssignment}
-      />
+      <section className="grid gap-6 xl:grid-cols-2">
+        <AssignmentSection
+          title="My assignments"
+          eyebrow="Owned by you"
+          subtitle={`${summary.activeAssignments} currently open for students.`}
+          assignments={filteredMyAssignments}
+          query={myAssignmentQuery}
+          onQueryChange={setMyAssignmentQuery}
+          statusFilter={myAssignmentFilter}
+          onStatusFilterChange={setMyAssignmentFilter}
+          emptyMessage="No assignments created yet."
+          showActions
+          onEdit={startEdit}
+          onDelete={removeAssignment}
+        />
 
-      <AssignmentSection
-        title={`Assignments in ${user?.department || "your department"}`}
-        eyebrow="Shared workspace"
-        subtitle={`${summary.departmentAssignments} visible across the department workspace.`}
-        assignments={filteredDepartmentAssignments}
-        query={departmentAssignmentQuery}
-        onQueryChange={setDepartmentAssignmentQuery}
-        statusFilter={departmentAssignmentFilter}
-        onStatusFilterChange={setDepartmentAssignmentFilter}
-        emptyMessage="No assignments found for your department."
-        showOwner
-      />
+        <AssignmentSection
+          title={`Assignments in ${user?.department || "your department"}`}
+          eyebrow="Shared workspace"
+          subtitle={`${summary.departmentAssignments} visible across the department workspace.`}
+          assignments={filteredDepartmentAssignments}
+          query={departmentAssignmentQuery}
+          onQueryChange={setDepartmentAssignmentQuery}
+          statusFilter={departmentAssignmentFilter}
+          onStatusFilterChange={setDepartmentAssignmentFilter}
+          emptyMessage="No assignments found for your department."
+          showOwner
+        />
+      </section>
     </DashboardLayout>
   );
 };

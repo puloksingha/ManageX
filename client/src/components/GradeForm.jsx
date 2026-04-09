@@ -7,7 +7,7 @@ const GradeForm = ({ onSubmit }) => {
 
   return (
     <form
-      className="grid gap-4 rounded-[1.75rem] border border-white/70 bg-white/85 p-5 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-900/85"
+      className="relative grid gap-4 rounded-lg border border-white/70 bg-white/85 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/85"
       onSubmit={async (e) => {
         e.preventDefault();
         setSaving(true);
@@ -21,29 +21,29 @@ const GradeForm = ({ onSubmit }) => {
       }}
     >
       <div>
-        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Marks</label>
+        <label className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200">Marks</label>
         <input
           type="number"
           min="0"
           placeholder="Enter marks"
           value={marks}
           onChange={(e) => setMarks(e.target.value)}
-          className="mt-2 w-full rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800"
+          className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-3 text-[13px] dark:border-slate-700 dark:bg-slate-800"
           required
         />
       </div>
       <div>
-        <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Feedback</label>
+        <label className="text-[14px] font-bold uppercase tracking-[0.18em] text-slate-700 dark:text-slate-200">Feedback</label>
         <textarea
           placeholder="Write feedback for the student"
           value={feedback}
           onChange={(e) => setFeedback(e.target.value)}
-          className="mt-2 min-h-28 w-full rounded-xl border border-slate-300 px-3 py-2.5 dark:border-slate-700 dark:bg-slate-800"
+          className="mt-2 min-h-28 w-full rounded-lg border border-slate-300 px-3 py-3 text-[13px] dark:border-slate-700 dark:bg-slate-800"
           required
         />
       </div>
       <button
-        className="rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
+        className="rounded-lg bg-emerald-600 px-4 py-3 text-[13px] font-semibold text-white transition hover:bg-emerald-500 disabled:opacity-60"
         disabled={saving}
       >
         {saving ? "Saving..." : "Save Grade"}

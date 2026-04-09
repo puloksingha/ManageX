@@ -71,7 +71,7 @@ const Sidebar = ({ isCollapsed = false, mobileOpen = false, onCloseMobile, onTog
   return (
     <aside
       style={{ width: `${sidebarWidth}px`, transition: "width 0.25s ease" }}
-      className={`fixed inset-y-0 left-0 z-40 flex shrink-0 flex-col overflow-x-hidden border-r border-emerald-900/30 bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950 px-3 py-4 text-white shadow-2xl transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
+      className={`fixed inset-y-0 left-0 z-[999] flex h-screen shrink-0 flex-col overflow-x-hidden border-r border-emerald-900/30 bg-gradient-to-b from-slate-950 via-slate-900 to-emerald-950 px-3 py-4 text-white shadow-2xl transition-transform duration-200 sm:static sm:z-auto sm:translate-x-0 ${
         mobileOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
@@ -83,7 +83,7 @@ const Sidebar = ({ isCollapsed = false, mobileOpen = false, onCloseMobile, onTog
             onClick={onToggleCollapse}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-white transition hover:bg-[rgba(255,255,255,0.07)] md:inline-flex"
+            className="hidden h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-white transition hover:bg-[rgba(255,255,255,0.07)] lg:inline-flex"
           >
             <svg
               viewBox="0 0 20 20"
@@ -97,7 +97,7 @@ const Sidebar = ({ isCollapsed = false, mobileOpen = false, onCloseMobile, onTog
           <button
             type="button"
             onClick={onCloseMobile}
-            className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/10 px-3 text-[13px] font-semibold text-white transition hover:bg-[rgba(255,255,255,0.07)] md:hidden"
+            className="inline-flex h-9 items-center justify-center rounded-lg border border-white/10 bg-white/10 px-3 text-[13px] font-semibold text-white transition hover:bg-[rgba(255,255,255,0.07)] sm:hidden"
           >
             Close
           </button>
@@ -113,7 +113,7 @@ const Sidebar = ({ isCollapsed = false, mobileOpen = false, onCloseMobile, onTog
             <div className="min-w-0">
               <p className="truncate text-[14px] font-bold uppercase tracking-[0.18em] text-emerald-200">{roleLabel}</p>
               <p className="mt-1 truncate text-[13px] font-semibold text-white">{user?.name || "ManageX User"}</p>
-              <p className="truncate text-[13px] text-white/65">{user?.email || "No email"}</p>
+              <p className="hidden truncate text-[13px] text-white/65 sm:block">{user?.email || "No email"}</p>
             </div>
           ) : null}
         </div>

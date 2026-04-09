@@ -11,7 +11,7 @@ const statusStyles = {
 const SubmissionTable = ({ rows = [], selectedId = "", onSelect }) => {
   return (
     <div className="relative overflow-hidden rounded-lg border border-white/70 bg-white/85 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/85">
-      <div className="grid gap-3 p-3 xl:hidden">
+      <div className="grid gap-3 p-3 sm:hidden">
         {rows.map((row) => {
           const isSelected = selectedId === row._id;
 
@@ -81,7 +81,7 @@ const SubmissionTable = ({ rows = [], selectedId = "", onSelect }) => {
         ) : null}
       </div>
 
-      <div className="hidden overflow-x-auto xl:block">
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[720px] text-left text-[13px]">
           <thead className="bg-slate-50/90 text-slate-600 dark:bg-slate-950/70 dark:text-slate-200">
             <tr>

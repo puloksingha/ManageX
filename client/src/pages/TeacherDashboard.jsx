@@ -24,14 +24,15 @@ const statusStyles = {
 };
 
 const panelClass =
-  "relative rounded-lg border border-white/70 bg-white/90 p-5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/90";
+  "relative rounded-lg border border-white/70 bg-white/90 p-3 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur dark:border-slate-800 dark:bg-slate-900/90 sm:p-4 lg:p-5";
 
 const insetCardClass =
-  "relative rounded-lg border border-slate-200 bg-slate-50/90 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-slate-800 dark:bg-slate-950/60";
+  "relative rounded-lg border border-slate-200 bg-slate-50/90 p-3 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-slate-800 dark:bg-slate-950/60 sm:p-4";
 
 const eyebrowClass = "text-[14px] font-bold uppercase tracking-[0.18em]";
-const bodyTextClass = "text-[13px] leading-6";
-const fieldClass = "w-full rounded-lg border border-slate-300 px-3 py-3 text-[13px] dark:border-slate-700 dark:bg-slate-800";
+const sectionTitleClass = "mt-2 text-[clamp(15px,2.4vw,20px)] font-black text-slate-900 dark:text-slate-100";
+const bodyTextClass = "text-[clamp(13px,2vw,16px)] leading-6";
+const fieldClass = "w-full rounded-lg border border-slate-300 px-3 py-3 text-[clamp(13px,2vw,16px)] dark:border-slate-700 dark:bg-slate-800";
 
 const submissionFilterOptions = [
   { id: "all", label: "All" },
@@ -47,10 +48,10 @@ const assignmentFilterOptions = [
 ];
 
 const SummaryCard = ({ label, value, description, tone }) => (
-  <article className={`relative rounded-lg bg-gradient-to-br ${toneStyles[tone]} p-5 text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)]`}>
-    <p className="text-[14px] font-bold uppercase tracking-[0.18em] text-white/72">{label}</p>
-    <p className="mt-3 text-3xl font-black tracking-tight">{value}</p>
-    <p className="mt-3 text-[13px] leading-6 text-white/82">{description}</p>
+  <article className={`relative min-h-[90px] rounded-lg bg-gradient-to-br ${toneStyles[tone]} p-3 text-white shadow-[0_2px_8px_rgba(0,0,0,0.12)] sm:p-4 lg:p-5`}>
+    <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-white/72 sm:text-[14px]">{label}</p>
+    <p className="mt-2 text-[clamp(20px,4vw,30px)] font-black tracking-tight">{value}</p>
+    <p className="mt-2 text-[clamp(12px,2vw,14px)] leading-5 text-white/82 sm:leading-6">{description}</p>
   </article>
 );
 
@@ -128,7 +129,7 @@ const AssignmentSection = ({
     <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
       <div className="min-w-0">
         <p className={`${eyebrowClass} text-emerald-700 dark:text-emerald-400`}>{eyebrow}</p>
-        <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">{title}</h2>
+        <h2 className={sectionTitleClass}>{title}</h2>
         <p className={`mt-2 text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>{subtitle}</p>
       </div>
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
@@ -476,7 +477,7 @@ const TeacherDashboard = () => {
 
   return (
     <DashboardLayout title="Department Dashboard">
-      <section className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]">
+      <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
         <SummaryCard label="Submissions" value={summary.submissions} description="Student uploads currently visible to your workspace." tone="slate" />
         <SummaryCard label="Need review" value={summary.pendingReview} description="Submissions still waiting for grading or feedback." tone="amber" />
         <SummaryCard label="Graded" value={summary.graded} description="Completed reviews already returned to students." tone="cyan" />
@@ -484,13 +485,13 @@ const TeacherDashboard = () => {
         <SummaryCard label="Late items" value={summary.lateSubmissions} description="Submissions already marked late in the current queue." tone="rose" />
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:gap-6">
         <div className="contents">
-          <article className={`${panelClass} md:col-start-1 md:row-start-1`}>
+          <article className={`${panelClass} order-1 sm:col-start-1 sm:row-start-1`}>
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <p className={`${eyebrowClass} text-emerald-700 dark:text-emerald-400`}>Review queue</p>
-                <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Student submissions</h2>
+                <h2 className={sectionTitleClass}>Student submissions</h2>
                 <p className={`mt-2 max-w-2xl text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>
                   Filter the queue, select a submission, and move into grading without leaving the page.
                 </p>
@@ -530,11 +531,11 @@ const TeacherDashboard = () => {
             </div>
           </article>
 
-          <article id="grading-panel" className={`${panelClass} md:col-start-1 md:row-start-2`}>
+          <article id="grading-panel" className={`${panelClass} order-3 sm:col-start-1 sm:row-start-2`}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="min-w-0">
                 <p className={`${eyebrowClass} text-cyan-700 dark:text-cyan-400`}>Grading panel</p>
-                <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Grade selected submission</h2>
+                <h2 className={sectionTitleClass}>Grade selected submission</h2>
                 <p className={`mt-2 text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>
                   Use the mobile cards or desktop table above to choose the work you want to review.
                 </p>
@@ -621,9 +622,9 @@ const TeacherDashboard = () => {
         </div>
 
         <div className="contents">
-          <article className={`${panelClass} md:col-start-2 md:row-start-1`}>
+          <article className={`${panelClass} order-2 sm:col-start-2 sm:row-start-1`}>
             <p className={`${eyebrowClass} text-cyan-700 dark:text-cyan-400`}>Quick actions</p>
-            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">Department control panel</h2>
+            <h2 className={sectionTitleClass}>Department control panel</h2>
             <p className={`mt-2 text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>
               Jump straight into assignment creation or the grading area from any device size.
             </p>
@@ -659,9 +660,9 @@ const TeacherDashboard = () => {
               </div>
           </article>
 
-          <article id="assignment-editor" className={`${panelClass} md:col-start-2 md:row-start-2`}>
+          <article id="assignment-editor" className={`${panelClass} order-4 sm:col-start-2 sm:row-start-2`}>
             <p className={`${eyebrowClass} text-emerald-700 dark:text-emerald-400`}>Assignment editor</p>
-            <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-slate-100">
+            <h2 className={sectionTitleClass}>
               {editingAssignmentId ? "Update assignment" : "Create assignment"}
             </h2>
             <p className={`mt-2 text-slate-600 dark:text-slate-300 ${bodyTextClass}`}>
@@ -739,7 +740,7 @@ const TeacherDashboard = () => {
                   <button
                     type="button"
                     onClick={resetForm}
-                    className="rounded-lg border border-slate-300 px-4 py-3 text-[13px] font-semibold dark:border-slate-700"
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-[13px] font-semibold dark:border-slate-700 sm:w-auto"
                   >
                     Cancel
                   </button>
@@ -750,7 +751,7 @@ const TeacherDashboard = () => {
         </div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-2">
+      <section className="grid gap-4 sm:gap-5 lg:grid-cols-2 lg:gap-6">
         <AssignmentSection
           title="My assignments"
           eyebrow="Owned by you"

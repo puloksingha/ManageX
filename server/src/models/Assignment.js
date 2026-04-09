@@ -1,5 +1,15 @@
 import mongoose from "mongoose";
 
+const attachmentMetaSchema = new mongoose.Schema(
+  {
+    url: { type: String, required: true, trim: true },
+    name: { type: String, trim: true, default: "" },
+    type: { type: String, trim: true, default: "" },
+    provider: { type: String, trim: true, default: "" }
+  },
+  { _id: false }
+);
+
 const assignmentSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
@@ -9,7 +19,8 @@ const assignmentSchema = new mongoose.Schema(
     batch: { type: mongoose.Schema.Types.ObjectId, ref: "Batch", required: true },
     dueDate: { type: Date, required: true },
     maxMarks: { type: Number, required: true, min: 1 },
-    attachments: [{ type: String }]
+    attachments: [{ type: String }],
+    attachmentDetails: [attachmentMetaSchema]
   },
   { timestamps: true }
 );

@@ -1,6 +1,7 @@
 import AuditLog from "../models/AuditLog.js";
 import User from "../models/User.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadSingleFile } from "../utils/storage.js";
 
 const sanitizeUser = (user) => ({
   id: user._id,
@@ -45,9 +46,11 @@ export const uploadMyAvatar = asyncHandler(async (req, res) => {
     throw new Error("Avatar file is required");
   }
 
+  const storedAvatar = await uploadSingleFile(req.file, { folder: "avatars" });
+
   const user = await User.findByIdAndUpdate(
     req.user._id,
-    { avatarUrl: `/uploads/${req.file.filename}` },
+    { avatarUrl: storedAvatar.url },
     { new: true }
   ).select("-password");
 

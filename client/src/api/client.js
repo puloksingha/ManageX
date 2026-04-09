@@ -17,6 +17,30 @@ const resolveApiOrigin = (url) => {
 
 export const apiOrigin = resolveApiOrigin(baseURL);
 
+export const resolveAssetUrl = (value) => {
+  const rawValue = String(value || "").trim();
+  if (!rawValue) {
+    return "";
+  }
+
+  if (/^(?:https?:)?\/\//i.test(rawValue) || rawValue.startsWith("data:") || rawValue.startsWith("blob:")) {
+    return rawValue;
+  }
+
+  const normalizedPath = rawValue.startsWith("/") ? rawValue : `/${rawValue}`;
+  return apiOrigin ? `${apiOrigin}${normalizedPath}` : normalizedPath;
+};
+
+export const withAssetVersion = (value, version) => {
+  const resolvedValue = resolveAssetUrl(value);
+  if (!resolvedValue || !version) {
+    return resolvedValue;
+  }
+
+  const separator = resolvedValue.includes("?") ? "&" : "?";
+  return `${resolvedValue}${separator}v=${encodeURIComponent(version)}`;
+};
+
 export const api = axios.create({
   baseURL
 });

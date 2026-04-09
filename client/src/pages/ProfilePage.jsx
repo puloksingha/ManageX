@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import DashboardLayout from "../layouts/DashboardLayout";
-import { api, apiOrigin } from "../api/client";
+import { api, withAssetVersion } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 
 const ProfilePage = () => {
@@ -70,7 +70,7 @@ const ProfilePage = () => {
             <img
               src={
                 profile?.avatarUrl
-                  ? `${apiOrigin}${profile.avatarUrl}?v=${avatarVersion}`
+                  ? withAssetVersion(profile.avatarUrl, avatarVersion)
                   : "https://placehold.co/100x100?text=Avatar"
               }
               alt="Avatar"

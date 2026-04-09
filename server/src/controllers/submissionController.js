@@ -3,6 +3,7 @@ import Submission from "../models/Submission.js";
 import AuditLog from "../models/AuditLog.js";
 import Subject from "../models/Subject.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadSingleFile } from "../utils/storage.js";
 
 const isDepartmentRole = (role) => role === "department" || role === "teacher";
 
@@ -34,11 +35,15 @@ export const submitAssignment = asyncHandler(async (req, res) => {
   }
 
   const isLate = new Date() > assignment.dueDate;
+  const storedFile = await uploadSingleFile(req.file, { folder: "submissions" });
 
   const submission = await Submission.findOneAndUpdate(
     { assignment: assignment._id, student: req.user._id },
     {
-      fileUrl: `/uploads/${req.file.filename}`,
+      fileUrl: storedFile.url,
+      fileName: storedFile.name || req.file.originalname || "",
+      fileType: storedFile.mimeType || req.file.mimetype || "",
+      fileProvider: storedFile.provider || "",
       notes: req.body.notes || "",
       submittedAt: new Date(),
       status: isLate ? "Late" : "Submitted"

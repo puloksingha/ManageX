@@ -1,4 +1,5 @@
-import { apiOrigin } from "../api/client";
+import { resolveAssetUrl } from "../api/client";
+import { getAssetActionLabel, getAssetDisplayName } from "../utils/assets";
 
 const statusStyles = {
   Submitted: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
@@ -42,16 +43,17 @@ const SubmissionTable = ({ rows = [], selectedId = "", onSelect }) => {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400">Attachment</p>
                   {row.fileUrl ? (
                     <a
-                      href={`${apiOrigin}${row.fileUrl}`}
+                      href={resolveAssetUrl(row.fileUrl)}
                       target="_blank"
                       rel="noreferrer"
                       className="mt-1 inline-flex text-sm font-semibold text-emerald-600 hover:underline"
                     >
-                      Open file
+                      {getAssetActionLabel({ type: row.fileType, url: row.fileUrl })}
                     </a>
                   ) : (
                     <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">No file</p>
                   )}
+                  {row.fileUrl ? <p className="mt-1 truncate text-xs text-slate-500 dark:text-slate-400">{getAssetDisplayName({ name: row.fileName, url: row.fileUrl })}</p> : null}
                 </div>
               </div>
 
@@ -110,12 +112,12 @@ const SubmissionTable = ({ rows = [], selectedId = "", onSelect }) => {
                 <td className="px-4 py-4">
                   {row.fileUrl ? (
                     <a
-                      href={`${apiOrigin}${row.fileUrl}`}
+                      href={resolveAssetUrl(row.fileUrl)}
                       target="_blank"
                       rel="noreferrer"
                       className="font-semibold text-emerald-600 hover:underline"
                     >
-                      Open file
+                      {getAssetActionLabel({ type: row.fileType, url: row.fileUrl })}
                     </a>
                   ) : (
                     "-"

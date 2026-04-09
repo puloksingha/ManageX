@@ -4,7 +4,8 @@ import { Bar } from "react-chartjs-2";
 import { BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Tooltip } from "chart.js";
 import DashboardLayout from "../layouts/DashboardLayout";
 import AssignmentCard from "../components/AssignmentCard";
-import { api, apiOrigin } from "../api/client";
+import { api, resolveAssetUrl } from "../api/client";
+import { getAssetActionLabel, getAssetDisplayName } from "../utils/assets";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
@@ -180,11 +181,11 @@ const StudentDashboard = () => {
               <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Upload file</label>
               <input
                 type="file"
-                accept=".pdf,.docx,.zip"
+                accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.zip"
                 onChange={(e) => setFile(e.target.files?.[0] || null)}
                 className="mt-3 w-full text-sm"
               />
-              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Accepted formats: PDF, DOCX, ZIP</p>
+              <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Accepted formats: JPG, PNG, WEBP, PDF, DOCX, ZIP</p>
             </div>
             <button className="rounded-xl bg-emerald-600 px-4 py-3 font-semibold text-white transition hover:bg-emerald-500">
               Submit assignment
@@ -260,6 +261,7 @@ const StudentDashboard = () => {
               dueDate={assignment.dueDate}
               status={assignment.status}
               attachments={assignment.attachments || []}
+              attachmentDetails={assignment.attachmentDetails || []}
             />
           ))}
           {assignments.length === 0 ? (
@@ -306,14 +308,19 @@ const StudentDashboard = () => {
                   <td className="px-3 py-4 text-slate-600 dark:text-slate-300">{submission.feedback || "-"}</td>
                   <td className="px-3 py-4">
                     {submission.fileUrl ? (
-                      <a
-                        href={`${apiOrigin}${submission.fileUrl}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-semibold text-emerald-600 hover:underline"
-                      >
-                        View file
-                      </a>
+                      <div className="space-y-1">
+                        <a
+                          href={resolveAssetUrl(submission.fileUrl)}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-semibold text-emerald-600 hover:underline"
+                        >
+                          {getAssetActionLabel({ type: submission.fileType, url: submission.fileUrl, defaultLabel: "View file" })}
+                        </a>
+                        <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                          {getAssetDisplayName({ name: submission.fileName, url: submission.fileUrl })}
+                        </p>
+                      </div>
                     ) : (
                       "-"
                     )}

@@ -6,7 +6,7 @@ ManageX is a MERN-style assignment management platform with role-based workflows
 - Frontend: React + Vite + Tailwind CSS
 - Backend: Node.js + Express + MongoDB (Mongoose)
 - Authentication: JWT access + refresh tokens, email verification (OTP), password reset
-- Uploads: Multer-based file uploads for assignments/submissions and profile avatars
+- Uploads: Multer-based uploads with local disk storage by default and optional Cloudinary support
 
 ## Core Features
 - Public landing page with role-focused onboarding
@@ -27,7 +27,7 @@ ManageX is a MERN-style assignment management platform with role-based workflows
 ## Repository Structure
 - `client/` - React frontend
 - `server/` - Express API
-- `server/uploads/` - uploaded files (served from `/uploads`)
+- `server/uploads/` - local uploaded files when `FILE_STORAGE_PROVIDER=local`
 
 ## Local Setup
 
@@ -116,6 +116,11 @@ Required for normal operation:
 - `ADMIN_PASSWORD` (required for `npm run seed`)
 - `ADMIN_NAME` (optional, defaults to `System Admin`)
 - `SEED_DEPARTMENTS` (optional comma-separated list)
+- `FILE_STORAGE_PROVIDER` (`local` or `cloudinary`, defaults to `local`)
+- `FILE_STORAGE_ROOT` (optional Cloudinary folder prefix, defaults to `managex`)
+- `CLOUDINARY_CLOUD_NAME` (required when `FILE_STORAGE_PROVIDER=cloudinary`)
+- `CLOUDINARY_API_KEY` (required when `FILE_STORAGE_PROVIDER=cloudinary`)
+- `CLOUDINARY_API_SECRET` (required when `FILE_STORAGE_PROVIDER=cloudinary`)
 
 ### Frontend (`client/.env`)
 - `VITE_API_BASE_URL` (use your backend URL, for example `https://api.example.com/api`; use `/api` only if frontend and backend are served from the same origin)
@@ -142,7 +147,7 @@ Required for normal operation:
 - Meta: `/api/meta/departments`, `/api/meta/public-batches`, `/api/meta/batches`, `/api/meta/subjects`
 
 ## Upload Rules
-- Assignment/submission files: PDF, DOCX, ZIP (max 10 MB)
+- Assignment/submission files: JPG, PNG, WEBP, PDF, DOCX, ZIP (max 10 MB)
 - Avatar files: JPG, PNG, WEBP (max 5 MB)
 
 ## Deployment Notes
@@ -170,7 +175,8 @@ Frontend:
 - `client/public/_redirects` is included for Netlify-style static hosting
 
 ### Important limitations
-- Uploaded files are stored in `server/uploads/`; use a host with persistent disk if you need uploaded files to survive restarts
+- When `FILE_STORAGE_PROVIDER=local`, uploaded files are stored in `server/uploads/`; use a host with persistent disk if you need uploaded files to survive restarts
+- When `FILE_STORAGE_PROVIDER=cloudinary`, uploaded files are stored in your Cloudinary product environment and URLs are persisted in MongoDB
 - The tracked secrets in local `.env` files must be rotated before any public deployment
 - For teacher/demo access, you can keep email mocking enabled and use pre-verified accounts
 

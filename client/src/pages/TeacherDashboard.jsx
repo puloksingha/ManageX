@@ -3,8 +3,9 @@ import toast from "react-hot-toast";
 import DashboardLayout from "../layouts/DashboardLayout";
 import SubmissionTable from "../components/SubmissionTable";
 import GradeForm from "../components/GradeForm";
-import { api, apiOrigin } from "../api/client";
+import { api, resolveAssetUrl } from "../api/client";
 import { useAuth } from "../context/AuthContext";
+import { getAssetActionLabel, getAssetDisplayName } from "../utils/assets";
 
 const toneStyles = {
   emerald: "from-emerald-500 to-emerald-600 shadow-emerald-500/20",
@@ -568,7 +569,7 @@ const TeacherDashboard = () => {
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Student note</p>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{selectedSubmission.note || "No note shared."}</p>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{selectedSubmission.notes || "No note shared."}</p>
                   </div>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-500 dark:text-slate-400">Submitted</p>
@@ -577,14 +578,23 @@ const TeacherDashboard = () => {
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
                   {selectedSubmission.fileUrl ? (
-                    <a
-                      href={`${apiOrigin}${selectedSubmission.fileUrl}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
-                    >
-                      Open student file
-                    </a>
+                    <div className="flex min-w-0 flex-col gap-1">
+                      <a
+                        href={resolveAssetUrl(selectedSubmission.fileUrl)}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-xl bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
+                      >
+                        {getAssetActionLabel({
+                          type: selectedSubmission.fileType,
+                          url: selectedSubmission.fileUrl,
+                          defaultLabel: "Open student file"
+                        })}
+                      </a>
+                      <p className="truncate text-xs text-slate-500 dark:text-slate-400">
+                        {getAssetDisplayName({ name: selectedSubmission.fileName, url: selectedSubmission.fileUrl })}
+                      </p>
+                    </div>
                   ) : null}
                   <span className="rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-300">
                     Max marks: {selectedSubmission.assignment?.maxMarks ?? "-"}
@@ -714,7 +724,7 @@ const TeacherDashboard = () => {
               </div>
               <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-950/60">
                 <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200">Reference attachment</label>
-                <input type="file" accept=".pdf,.docx,.zip" onChange={(e) => setAttachment(e.target.files?.[0] || null)} className="mt-3 w-full text-sm" />
+                <input type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,.docx,.zip" onChange={(e) => setAttachment(e.target.files?.[0] || null)} className="mt-3 w-full text-sm" />
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">

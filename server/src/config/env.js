@@ -12,6 +12,8 @@ export const allowedOrigins = Array.from(
 );
 
 export const isEmailMockEnabled = String(process.env.EMAIL_MOCK || "false").toLowerCase() === "true";
+export const fileStorageProvider = String(process.env.FILE_STORAGE_PROVIDER || "local").trim().toLowerCase();
+export const fileStorageRoot = String(process.env.FILE_STORAGE_ROOT || "managex").trim();
 
 export const validateEnv = () => {
   const required = [
@@ -31,6 +33,14 @@ export const validateEnv = () => {
     required.push("SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS", "MAIL_FROM");
   }
 
+  if (!["local", "cloudinary"].includes(fileStorageProvider)) {
+    throw new Error(`Invalid FILE_STORAGE_PROVIDER "${fileStorageProvider}". Use "local" or "cloudinary".`);
+  }
+
+  if (fileStorageProvider === "cloudinary") {
+    required.push("CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET");
+  }
+
   const missing = required.filter((key) => !String(process.env[key] || "").trim() && !key.includes(" or "));
 
   if (!allowedOrigins.length) {
@@ -41,4 +51,3 @@ export const validateEnv = () => {
     throw new Error(`Missing required environment configuration: ${missing.join(", ")}`);
   }
 };
-

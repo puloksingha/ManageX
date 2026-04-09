@@ -3,6 +3,7 @@ import AuditLog from "../models/AuditLog.js";
 import Subject from "../models/Subject.js";
 import Batch from "../models/Batch.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+import { uploadManyFiles } from "../utils/storage.js";
 
 const isDepartmentRole = (role) => role === "department" || role === "teacher";
 
@@ -33,12 +34,20 @@ export const createAssignment = asyncHandler(async (req, res) => {
     }
   }
 
-  const attachments = req.files?.map((file) => `/uploads/${file.filename}`) || [];
+  const uploadedAttachments = await uploadManyFiles(req.files, { folder: "assignments" });
+  const attachments = uploadedAttachments.map((file) => file.url);
+  const attachmentDetails = uploadedAttachments.map((file) => ({
+    url: file.url,
+    name: file.name || "",
+    type: file.mimeType || "",
+    provider: file.provider || ""
+  }));
 
   const assignment = await Assignment.create({
     ...req.body,
     createdBy: req.user._id,
-    attachments
+    attachments,
+    attachmentDetails
   });
 
   await AuditLog.create({
@@ -158,11 +167,18 @@ export const updateAssignment = asyncHandler(async (req, res) => {
     }
   }
 
-  const nextAttachments = req.files?.length
-    ? req.files.map((file) => `/uploads/${file.filename}`)
-    : assignment.attachments;
+  const nextUploadedAttachments = req.files?.length ? await uploadManyFiles(req.files, { folder: "assignments" }) : null;
+  const nextAttachments = nextUploadedAttachments?.length ? nextUploadedAttachments.map((file) => file.url) : assignment.attachments;
+  const nextAttachmentDetails = nextUploadedAttachments?.length
+    ? nextUploadedAttachments.map((file) => ({
+        url: file.url,
+        name: file.name || "",
+        type: file.mimeType || "",
+        provider: file.provider || ""
+      }))
+    : assignment.attachmentDetails;
 
-  Object.assign(assignment, { ...req.body, attachments: nextAttachments });
+  Object.assign(assignment, { ...req.body, attachments: nextAttachments, attachmentDetails: nextAttachmentDetails });
   await assignment.save();
 
   await AuditLog.create({

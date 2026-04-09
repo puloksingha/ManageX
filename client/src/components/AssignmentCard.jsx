@@ -1,4 +1,5 @@
-import { apiOrigin } from "../api/client";
+import { resolveAssetUrl } from "../api/client";
+import { getAssetActionLabel, getAssetDisplayName } from "../utils/assets";
 
 const statusStyles = {
   Submitted: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
@@ -9,9 +10,10 @@ const statusStyles = {
   Open: "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
 };
 
-const AssignmentCard = ({ title, subject, dueDate, status, attachments = [] }) => {
+const AssignmentCard = ({ title, subject, dueDate, status, attachments = [], attachmentDetails = [] }) => {
   const due = dueDate ? new Date(dueDate) : null;
   const dueLabel = due && !Number.isNaN(due.getTime()) ? due.toLocaleString() : "No due date";
+  const primaryAttachment = attachmentDetails[0] || (attachments[0] ? { url: attachments[0] } : null);
 
   return (
     <article className="group rounded-[1.75rem] border border-white/70 bg-white/85 p-5 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/85">
@@ -34,17 +36,20 @@ const AssignmentCard = ({ title, subject, dueDate, status, attachments = [] }) =
         <p className="text-sm text-slate-500 dark:text-slate-300">
           {attachments.length ? `${attachments.length} attachment${attachments.length > 1 ? "s" : ""}` : "No attachment"}
         </p>
-        {attachments.length ? (
+        {primaryAttachment ? (
           <a
-            href={`${apiOrigin}${attachments[0]}`}
+            href={resolveAssetUrl(primaryAttachment.url)}
             target="_blank"
             rel="noreferrer"
             className="rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
           >
-            View file
+            {getAssetActionLabel(primaryAttachment)}
           </a>
         ) : null}
       </div>
+      {primaryAttachment ? (
+        <p className="mt-3 truncate text-xs text-slate-500 dark:text-slate-400">{getAssetDisplayName(primaryAttachment)}</p>
+      ) : null}
     </article>
   );
 };
